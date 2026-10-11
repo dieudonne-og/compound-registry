@@ -2,9 +2,11 @@ import { fileURLToPath } from 'node:url';
 import { createDb, type Database } from './client';
 import { loadConfig, type Config } from '../shared/config';
 import { seedReference } from '../modules/reference/reference.seed';
+import { seedUsers } from '../modules/auth/users.seed';
 
 export async function seed(ctx: { db: Database; config: Config }, opts: { demo: boolean }) {
   await seedReference(ctx.db);
+  await seedUsers(ctx.db, process.env.SEED_PASSWORD ?? 'Demo!2026');
   void opts;
 }
 

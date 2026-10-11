@@ -18,6 +18,8 @@ import { z } from 'zod';
 import type { Config } from './shared/config';
 import type { Database, Pool } from './db/client';
 import { AppError, errorHandler } from './shared/errors';
+import { authPlugin } from './modules/auth/auth.plugin';
+import { authRoutes } from './modules/auth/auth.routes';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -65,6 +67,7 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
   await app.register(multipart, {
     limits: { fileSize: config.MAX_UPLOAD_MB * 1024 * 1024, files: 1, fields: 5 },
   });
+  await app.register(authPlugin);
   await app.register(swagger, {
     openapi: {
       info: { title: 'Compound Registry API', version: '1.0.0' },
@@ -90,7 +93,7 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
           return { status: 'ok' as const, db: 'ok' as const };
         },
       );
-      // Feature routes are registered here by later tasks.
+      await api.register(authRoutes, { prefix: '/auth' });
     },
     { prefix: '/api' },
   );
