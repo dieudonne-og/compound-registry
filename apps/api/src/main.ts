@@ -10,7 +10,7 @@ import { purgeIdempotencyKeys } from './modules/production/idempotency';
 const config = loadConfig();
 const { db, pool } = createDb(config.DATABASE_URL);
 await runMigrations(pool);
-await seed({ db, config }, { demo: config.NODE_ENV !== 'production' });
+await seed({ db, config }, { demo: process.env.SEED_DEMO === 'true' || config.NODE_ENV !== 'production' });
 
 const app = await buildApp({ config, db, pool });
 const compounds = createCompoundService({ db, storage: app.storage, config });
