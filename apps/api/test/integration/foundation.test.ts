@@ -47,9 +47,7 @@ describe('foundation', () => {
     expect(rows[0]!.tz).toBe('+00:00');
   });
 
-  it('rejects updates and deletes on the audit table', async () => {
-    await expect(t.pool.query('UPDATE production_audit_event SET reason = NULL')).resolves.toBeDefined(); // no rows yet
-    // Rows are inserted in the production task's tests; here we only check the triggers exist.
+  it('installs append-only triggers on the audit table', async () => {
     const [triggers] = await t.pool.query<RowDataPacket[]>(
       "SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE EVENT_OBJECT_TABLE = 'production_audit_event'",
     );

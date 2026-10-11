@@ -5,6 +5,7 @@ import { seed } from './db/seed';
 import { loadConfig } from './shared/config';
 import { createCompoundService } from './modules/compounds/compounds.service';
 import { startMaintenance } from './modules/compounds/cleanup';
+import { purgeIdempotencyKeys } from './modules/production/idempotency';
 
 const config = loadConfig();
 const { db, pool } = createDb(config.DATABASE_URL);
@@ -13,7 +14,7 @@ await seed({ db, config }, { demo: config.NODE_ENV !== 'production' });
 
 const app = await buildApp({ config, db, pool });
 const compounds = createCompoundService({ db, storage: app.storage, config });
-startMaintenance(app, [() => compounds.expirePending()]);
+startMaintenance(app, [() => compounds.expirePending(), () => purgeIdempotencyKeys(db)]);
 
 const shutdown = async () => {
   await app.close();
