@@ -48,7 +48,7 @@ export const compoundRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   app.post(
-    '/',
+    '',
     {
       preHandler: app.authorize('compound:create'),
       schema: {
@@ -62,7 +62,7 @@ export const compoundRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   app.get(
-    '/',
+    '',
     {
       preHandler: app.authorize('compound:read'),
       schema: {

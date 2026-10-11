@@ -22,7 +22,7 @@ export const productionRoutes: FastifyPluginAsyncZod = async (app) => {
   const service = createProductionService({ db: app.db, config: app.config });
 
   app.post(
-    '/',
+    '',
     {
       preHandler: app.authorize('production:create'),
       schema: {
@@ -46,7 +46,7 @@ export const productionRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   app.get(
-    '/',
+    '',
     {
       preHandler: app.authorize('production:read'),
       schema: {
