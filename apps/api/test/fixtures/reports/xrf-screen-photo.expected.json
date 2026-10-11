@@ -1,0 +1,15 @@
+{
+  "file": "xrf-screen-photo.jpg",
+  "mime": "image/jpeg",
+  "method": "ocr",
+  "values": {
+    "mn_percent": "6.0700",
+    "zn_percent": "0.0670",
+    "as_percent": "0.2700",
+    "nb2o5_percent": "25.7900",
+    "ta2o5_percent": "27.4300"
+  },
+  "missing": [],
+  "unmapped": ["Nb", "Se", "Y"],
+  "note": "Zr 0.399 on the bottom screen line is not recognised from this 432x533 photo of a moir\u00e9 LCD in any preprocessing; Zr has no Compound column, so it only affects the \"found but not saved\" list."
+}

@@ -1,0 +1,14 @@
+{
+  "file": "analysis-certificate-text.pdf",
+  "mime": "application/pdf",
+  "method": "text-layer",
+  "values": {
+    "sn_percent": "58.7200",
+    "nb2o5_percent": "0.7000",
+    "fe_percent": "1.1400",
+    "mn_percent": "0.1100",
+    "ta_percent": "0.8300"
+  },
+  "missing": ["wo_percent"],
+  "unmapped": []
+}
