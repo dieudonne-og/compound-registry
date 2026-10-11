@@ -22,6 +22,7 @@ describe('api', () => {
   });
 
   it('refreshes the session once and retries after a 401', async () => {
+    document.cookie = 'csrf_token=abc123';
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(json(401, { error: { code: 'UNAUTHENTICATED', message: 'x', requestId: 'r' } }))
@@ -34,6 +35,15 @@ describe('api', () => {
       '/api/auth/refresh',
       '/api/production',
     ]);
+  });
+
+  it('does not try to refresh when there was never a session', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(json(401, { error: { code: 'UNAUTHENTICATED', message: 'x', requestId: 'r' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(api('/auth/me')).rejects.toMatchObject({ status: 401 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('turns error bodies into ApiError with field details', async () => {
