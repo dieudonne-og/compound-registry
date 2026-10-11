@@ -20,12 +20,15 @@ import type { Database, Pool } from './db/client';
 import { AppError, errorHandler } from './shared/errors';
 import { authPlugin } from './modules/auth/auth.plugin';
 import { authRoutes } from './modules/auth/auth.routes';
+import { compoundRoutes } from './modules/compounds/compounds.routes';
+import { createStorage, type Storage } from './shared/storage';
 
 declare module 'fastify' {
   interface FastifyInstance {
     config: Config;
     db: Database;
     pool: Pool;
+    storage: Storage;
   }
 }
 
@@ -47,6 +50,7 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
   app.decorate('config', config);
   app.decorate('db', deps.db);
   app.decorate('pool', deps.pool);
+  app.decorate('storage', createStorage(config.STORAGE_DIR));
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((request, reply) =>
     reply
@@ -94,6 +98,7 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
         },
       );
       await api.register(authRoutes, { prefix: '/auth' });
+      await api.register(compoundRoutes, { prefix: '/compounds' });
     },
     { prefix: '/api' },
   );

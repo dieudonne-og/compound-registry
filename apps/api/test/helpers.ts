@@ -67,3 +67,17 @@ export function request(app: App, session: Session, opts: InjectOptions) {
     headers: { ...opts.headers, cookie: session.cookies, 'x-csrf-token': session.csrf },
   });
 }
+
+export async function multipart(
+  fields: Record<string, string>,
+  file?: { name: string; data: Buffer; type: string },
+) {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(fields)) form.append(k, v);
+  if (file) form.append('file', new Blob([file.data], { type: file.type }), file.name);
+  const encoded = new Response(form);
+  return {
+    payload: Buffer.from(await encoded.arrayBuffer()),
+    headers: { 'content-type': encoded.headers.get('content-type')! },
+  };
+}

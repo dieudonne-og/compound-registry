@@ -42,6 +42,11 @@ describe('foundation', () => {
     expect(rows[0]!.d).toBe('2026-10-11');
   });
 
+  it('runs every database session in UTC so SQL and application timestamps agree', async () => {
+    const [rows] = await t.pool.query<RowDataPacket[]>('SELECT @@session.time_zone AS tz');
+    expect(rows[0]!.tz).toBe('+00:00');
+  });
+
   it('rejects updates and deletes on the audit table', async () => {
     await expect(t.pool.query('UPDATE production_audit_event SET reason = NULL')).resolves.toBeDefined(); // no rows yet
     // Rows are inserted in the production task's tests; here we only check the triggers exist.
