@@ -21,6 +21,7 @@ import { AppError, errorHandler } from './shared/errors';
 import { authPlugin } from './modules/auth/auth.plugin';
 import { authRoutes } from './modules/auth/auth.routes';
 import { compoundRoutes } from './modules/compounds/compounds.routes';
+import { referenceRoutes } from './modules/reference/reference.routes';
 import { createStorage, type Storage } from './shared/storage';
 
 declare module 'fastify' {
@@ -99,6 +100,7 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
       );
       await api.register(authRoutes, { prefix: '/auth' });
       await api.register(compoundRoutes, { prefix: '/compounds' });
+      await api.register(referenceRoutes, { prefix: '/reference' });
     },
     { prefix: '/api' },
   );
