@@ -44,7 +44,8 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
       ...(config.NODE_ENV === 'development' ? { transport: { target: 'pino-pretty' } } : {}),
     },
     genReqId: () => randomUUID(),
-    trustProxy: true,
+    // Only this many proxy hops may set the client address via X-Forwarded-For; 0 trusts none.
+    trustProxy: (_address: string, hop: number) => hop < config.TRUST_PROXY,
     bodyLimit: 1024 * 1024,
   }).withTypeProvider<ZodTypeProvider>();
 

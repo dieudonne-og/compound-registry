@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:8.4
-    command: ["--log-bin-trust-function-creators=1"]
+    command: ['--log-bin-trust-function-creators=1']
     environment:
       MYSQL_DATABASE: compound_registry
       MYSQL_USER: cr
@@ -9,7 +9,17 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_dev_password}
     volumes: [db-data:/var/lib/mysql]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_dev_password}"]
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          '127.0.0.1',
+          '-u',
+          'root',
+          '-p${DB_ROOT_PASSWORD:-root_dev_password}',
+        ]
       interval: 5s
       retries: 20
 
@@ -24,13 +34,24 @@ services:
       APP_TIMEZONE: ${APP_TIMEZONE:-Africa/Kigali}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
       SEED_DEMO: ${SEED_DEMO:-true}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      TRUST_PROXY: 1
+      # Plain HTTP on localhost; set to true when served over HTTPS.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      OCR_CONCURRENCY: ${OCR_CONCURRENCY:-2}
       SEED_PASSWORD: ${SEED_PASSWORD:-Demo!2026}
     volumes: [uploads:/data/storage]
 
   web:
-    build: { context: ., dockerfile: docker/web.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        VITE_SHOW_DEMO_ACCOUNTS: ${SHOW_DEMO_ACCOUNTS:-true}
+        VITE_MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
     depends_on: [api]
-    ports: ["8080:80"]
+    ports: ['8080:80']
 
 volumes:
   db-data:

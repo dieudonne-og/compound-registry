@@ -9,6 +9,12 @@ import { alternativePreparations, prepareForOcr } from './preprocess';
 import { rasterizePage } from './rasterize';
 import { readPdfText, textQuality } from './text-layer';
 import { votedLines } from './vote';
+import type { Semaphore } from '../../../shared/semaphore';
+
+export type ExtractOptions = { deadline?: number; ocrLimit?: Semaphore };
+
+/** Escalation adds four OCR runs; only start it when this much time is left. */
+const ESCALATION_MS = 30_000;
 
 export type ExtractionOutcome = ParseResult & {
   method: 'text-layer' | 'ocr' | 'hybrid';
@@ -21,13 +27,20 @@ const STRONG_CONFIDENCE = 0.85;
 
 type OcrRun = { lines: TextLine[]; parsed: ParseResult; found: number };
 
-async function runOcr(images: Buffer[], modes: readonly (4 | 6)[], langs: string): Promise<OcrRun[]> {
+async function runOcr(
+  images: Buffer[],
+  modes: readonly (4 | 6)[],
+  langs: string,
+  opts: ExtractOptions,
+): Promise<OcrRun[]> {
   const runs: OcrRun[] = [];
   for (const image of images) {
     for (const psm of modes) {
+      if (opts.deadline !== undefined && Date.now() > opts.deadline) throw extractionFailed('too_slow');
       let lines: TextLine[];
       try {
-        lines = await recognize(image, { langs, psm });
+        const read = () => recognize(image, { langs, psm });
+        lines = await (opts.ocrLimit ? opts.ocrLimit.run(read) : read());
       } catch {
         throw extractionFailed('ocr_failed');
       }
@@ -46,22 +59,24 @@ async function runOcr(images: Buffer[], modes: readonly (4 | 6)[], langs: string
  * Standard preparation in two page-segmentation modes; the better run wins when it is confident.
  * Otherwise (noisy photos, screens) alternative preparations are added and the runs are combined by vote.
  */
-async function ocrBest(image: Buffer, langs: string): Promise<TextLine[]> {
+async function ocrBest(image: Buffer, langs: string, opts: ExtractOptions): Promise<TextLine[]> {
   let standard: Buffer;
   try {
     standard = await prepareForOcr(image);
   } catch {
     throw extractionFailed('unreadable');
   }
-  const runs = await runOcr([standard], [6, 4], langs);
+  const runs = await runOcr([standard], [6, 4], langs, opts);
   const best = runs.reduce((a, b) =>
     b.found > a.found || (b.found === a.found && b.parsed.overallConfidence > a.parsed.overallConfidence)
       ? b
       : a,
   );
-  if (best.found > 0 && best.parsed.overallConfidence >= STRONG_CONFIDENCE) return best.lines;
+  const strong = best.found > 0 && best.parsed.overallConfidence >= STRONG_CONFIDENCE;
+  const timeLeft = opts.deadline === undefined || opts.deadline - Date.now() > ESCALATION_MS;
+  if (strong || !timeLeft) return best.lines;
 
-  const extra = await runOcr(await alternativePreparations(image), [6], langs);
+  const extra = await runOcr(await alternativePreparations(image), [6], langs, opts);
   return votedLines([...runs, ...extra].map((r) => r.parsed));
 }
 
@@ -69,6 +84,7 @@ export async function extractReport(
   buffer: Buffer,
   mime: AcceptedMime,
   langs: string,
+  opts: ExtractOptions = {},
 ): Promise<ExtractionOutcome> {
   const pageLines: TextLine[][] = [];
   let textPages = 0;
@@ -90,12 +106,13 @@ export async function extractReport(
           await writeFile(pdfPath, buffer);
           written = true;
         }
-        pageLines.push(await ocrBest(await rasterizePage(pdfPath, index + 1, dir), langs));
+        if (opts.deadline !== undefined && Date.now() > opts.deadline) throw extractionFailed('too_slow');
+        pageLines.push(await ocrBest(await rasterizePage(pdfPath, index + 1, dir), langs, opts));
         ocrPages++;
       }
     });
   } else {
-    pageLines.push(await ocrBest(buffer, langs));
+    pageLines.push(await ocrBest(buffer, langs, opts));
     ocrPages++;
   }
 

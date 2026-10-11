@@ -155,6 +155,34 @@ describe('updating records', () => {
     expect(history).toHaveLength(1);
   });
 
+  it('keeps records editable after one of their references is retired', async () => {
+    const company = (
+      await request(t.app, admin, {
+        method: 'POST',
+        url: '/api/reference/companies',
+        payload: { name: `Retired Co ${randomUUID().slice(0, 6)}` },
+      })
+    ).json();
+    const record = (await create(operator, body({ companyId: company.id }))).json();
+    await request(t.app, admin, {
+      method: 'PATCH',
+      url: `/api/reference/companies/${company.id}`,
+      payload: { active: false },
+    });
+    const res = await update(
+      operator,
+      record.id,
+      asUpdate(record, { operatorRepresentative: 'Claudine Ingabire' }),
+    );
+    expect(res.statusCode).toBe(200);
+    const moved = await update(
+      operator,
+      record.id,
+      asUpdate(res.json(), { companyId: company.id, businessLocationId: ref.businessLocationId }),
+    );
+    expect(moved.statusCode).toBe(200); // unchanged reference stays valid
+  });
+
   it('stops operators from editing other people’s records or critical fields', async () => {
     const mine = (await create(operator, body())).json();
     const theirs = (await create(supervisor, body())).json();

@@ -140,4 +140,34 @@ describe('tamper detection', () => {
     );
     expect(await verify(id)).toMatchObject({ status: 'tampered', failure: { reason: 'STATE_MISMATCH' } });
   });
+
+  it('never reports tampering for a record that is being edited at the same time', async () => {
+    const id = await recordWithHistory();
+    let record = (await request(t.app, supervisor, { method: 'GET', url: `/api/production/${id}` })).json();
+    const statuses: string[] = [];
+    for (let round = 0; round < 15; round++) {
+      const edit = request(t.app, supervisor, {
+        method: 'PUT',
+        url: `/api/production/${id}`,
+        payload: {
+          productionCode: record.productionCode,
+          tagNumber: record.tagNumber,
+          productionDate: record.productionDate,
+          weightKg: String(200 + round),
+          mineralTypeId: record.mineralType.id,
+          businessLocationId: record.businessLocation.id,
+          traceabilityAgentId: record.traceabilityAgent.id,
+          companyId: record.company.id,
+          operatorRepresentative: record.operatorRepresentative,
+          version: record.version,
+          reason: `Round ${round} correction`,
+        },
+      });
+      const checks = Array.from({ length: 4 }, () => verify(id));
+      const [edited, ...results] = await Promise.all([edit, ...checks]);
+      record = edited.json();
+      statuses.push(...results.map((r) => r.status));
+    }
+    expect(statuses.filter((s) => s !== 'intact')).toEqual([]);
+  });
 });

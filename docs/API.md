@@ -314,6 +314,8 @@ How it works: every change to the production ID, tag number, weight or mineral t
 | Each recomputed HMAC equals the stored `hash` (`HASH_MISMATCH`)                         | Edited events, chains rebuilt without the secret |
 | Replaying all changes reproduces the live record (`STATE_MISMATCH`)                     | Direct edits to the record, deleted latest event |
 
+Verification reads the record and its events in one consistent snapshot, so an edit saved at the same moment never shows as tampering. Limit: someone with full database access who removes the triggers, deletes a record's latest events and also rolls the record back to the values before them — or deletes a record with its whole history — leaves nothing in the database to contradict it. Detecting that requires a copy of the chain heads kept outside the database.
+
 ## Reference data
 
 - `GET /api/reference/{companies|locations|agents|mineral-types}` → `[{ "id": 1, "name": "Cassiterite (Tin)", "code": "SN", "active": true }]` (admins may add `?includeInactive=true`)

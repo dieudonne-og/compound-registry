@@ -9,6 +9,7 @@ const HINTS = {
   no_compounds:
     'No compound values were recognised. Check that this is a laboratory analysis report, or upload a sharper scan.',
   ocr_failed: 'Text recognition failed for this file. Try exporting the report as PDF or PNG.',
+  too_slow: 'Reading this report took too long. Upload only the pages with the analysis results.',
 } as const;
 
 export type FailureReason = keyof typeof HINTS;

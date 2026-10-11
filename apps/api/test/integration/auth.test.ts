@@ -50,6 +50,57 @@ describe('auth', () => {
     expect(codes[5]).toBe(429);
   });
 
+  it('cannot be bypassed by sending a different X-Forwarded-For header on each attempt', async () => {
+    const codes: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const res = await t.app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        remoteAddress: '10.1.1.9',
+        headers: { 'x-forwarded-for': `203.0.113.${i}` },
+        payload: { email: 'auditor@example.com', password: 'x' },
+      });
+      codes.push(res.statusCode);
+    }
+    expect(codes[5]).toBe(429);
+  });
+
+  it('uses the address added by the trusted proxy, not one supplied by the client', async () => {
+    const proxied = await createTestApp({ TRUST_PROXY: 1 });
+    try {
+      const codes: number[] = [];
+      for (let i = 0; i < 6; i++) {
+        const res = await proxied.app.inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          remoteAddress: '172.18.0.5',
+          headers: { 'x-forwarded-for': `198.51.100.${i}, 203.0.113.7` },
+          payload: { email: 'auditor@example.com', password: 'x' },
+        });
+        codes.push(res.statusCode);
+      }
+      expect(codes[5]).toBe(429);
+    } finally {
+      await proxied.close();
+    }
+  });
+
+  it('marks session cookies Secure when configured', async () => {
+    const secure = await createTestApp({ COOKIE_SECURE: true });
+    try {
+      const res = await secure.app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        remoteAddress: '10.1.1.10',
+        payload: { email: 'admin@example.com', password: 'Demo!2026' },
+      });
+      const cookies = ([] as string[]).concat(res.headers['set-cookie'] ?? []);
+      expect(cookies.every((c) => /;\s*Secure/i.test(c))).toBe(true);
+    } finally {
+      await secure.close();
+    }
+  });
+
   it('requires a session for /me', async () => {
     const res = await t.app.inject({ method: 'GET', url: '/api/auth/me' });
     expect(res.statusCode).toBe(401);

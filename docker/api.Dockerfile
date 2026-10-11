@@ -14,7 +14,7 @@ RUN pnpm --filter @cr/api build && pnpm --filter @cr/api deploy --prod /out \
 FROM node:22-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng tesseract-ocr-fra poppler-utils \
  && rm -rf /var/lib/apt/lists/*
-ENV NODE_ENV=production STORAGE_DIR=/data/storage
+ENV NODE_ENV=production STORAGE_DIR=/data/storage OMP_THREAD_LIMIT=1
 WORKDIR /app
 COPY --from=build /out .
 RUN mkdir -p /data/storage && chown -R node:node /data

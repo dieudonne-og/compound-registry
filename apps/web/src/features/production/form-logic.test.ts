@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProductionRecord } from '@cr/contracts';
-import { changedCriticalFields, productionFormSchema, toFormValues } from './form-logic';
+import { changedCriticalFields, optionsWithCurrent, productionFormSchema, toFormValues } from './form-logic';
 
 const record: ProductionRecord = {
   id: 1,
@@ -52,5 +52,14 @@ describe('production form logic', () => {
       productionDate: '2026-10-12',
     });
     expect(r.error?.issues.map((i) => i.path[0])).toContain('productionDate');
+  });
+
+  it('keeps a retired reference selectable for records that already use it', () => {
+    const active = [{ id: 1, name: 'Akagera Minerals Ltd', code: null, active: true }];
+    expect(optionsWithCurrent(active, { id: 9, name: 'Old Co' })).toEqual([
+      { value: 1, label: 'Akagera Minerals Ltd', hint: null },
+      { value: 9, label: 'Old Co (retired)', hint: null },
+    ]);
+    expect(optionsWithCurrent(active, { id: 1, name: 'Akagera Minerals Ltd' })).toHaveLength(1);
   });
 });

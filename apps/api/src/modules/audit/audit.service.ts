@@ -74,8 +74,9 @@ export function createAuditService(db: Database, secret: string) {
 
     events,
 
-    verify: async (productionId: number, current: CriticalSnapshot) =>
-      verifyChain(secret, await events(productionId), current),
+    /** Pass the transaction that read `current` so the record and its events come from one snapshot. */
+    verify: async (productionId: number, current: CriticalSnapshot, conn: Database | Tx = db) =>
+      verifyChain(secret, await events(productionId, conn), current),
 
     async history(productionId: number): Promise<AuditEventView[]> {
       const list = await events(productionId);
@@ -108,24 +109,31 @@ export function createAuditService(db: Database, secret: string) {
 
     /** Verifies every record; also counts events whose record no longer exists. */
     async verifyAll(): Promise<{ intact: number; tampered: number }> {
-      const rows = await db.select().from(production);
-      const all = (
-        await db
-          .select()
-          .from(productionAuditEvent)
-          .orderBy(asc(productionAuditEvent.productionId), asc(productionAuditEvent.seq))
-      ).map(toStored);
-      const byRecord = new Map<number, StoredEvent[]>();
-      for (const e of all) byRecord.set(e.productionId, [...(byRecord.get(e.productionId) ?? []), e]);
-      let intact = 0;
-      let tampered = 0;
-      for (const row of rows) {
-        const ok = verifyChain(secret, byRecord.get(row.id) ?? [], snapshotOf(row)).status === 'intact';
-        if (ok) intact++;
-        else tampered++;
-        byRecord.delete(row.id);
-      }
-      return { intact, tampered: tampered + byRecord.size };
+      // One transaction = one consistent snapshot, so an edit committing mid-check cannot look like tampering.
+      return db.transaction(async (tx) => {
+        const rows = await tx.select().from(production);
+        const all = (
+          await tx
+            .select()
+            .from(productionAuditEvent)
+            .orderBy(asc(productionAuditEvent.productionId), asc(productionAuditEvent.seq))
+        ).map(toStored);
+        const byRecord = new Map<number, StoredEvent[]>();
+        for (const e of all) {
+          const list = byRecord.get(e.productionId);
+          if (list) list.push(e);
+          else byRecord.set(e.productionId, [e]);
+        }
+        let intact = 0;
+        let tampered = 0;
+        for (const row of rows) {
+          const ok = verifyChain(secret, byRecord.get(row.id) ?? [], snapshotOf(row)).status === 'intact';
+          if (ok) intact++;
+          else tampered++;
+          byRecord.delete(row.id);
+        }
+        return { intact, tampered: tampered + byRecord.size };
+      });
     },
   };
 }

@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Eye, EyeOff, FlaskConical, Loader2, ShieldCheck, ScanText, Link2 } from 'lucide-react';
 import { loginInput, type LoginInput, type SessionUser } from '@cr/contracts';
 import { api, ApiError } from '@/lib/api';
+import { safeNext } from '@/lib/redirect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +30,7 @@ export function Component() {
     resolver: zodResolver(loginInput),
     defaultValues: { email: '', password: '' },
   });
-  const next = params.get('next')?.startsWith('/') ? params.get('next')! : '/';
+  const next = safeNext(params.get('next'));
 
   const login = useMutation({
     mutationFn: (values: LoginInput) =>

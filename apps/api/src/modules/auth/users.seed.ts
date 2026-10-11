@@ -9,6 +9,18 @@ export const DEMO_USERS = [
   { name: 'Patrick Niyonzima', email: 'auditor@example.com', role: 'auditor' },
 ] as const;
 
+export async function seedAdmin(db: Database, email: string, password: string) {
+  const existing = await db.select({ id: users.id }).from(users).limit(1);
+  if (existing.length) return;
+  await db.insert(users).values({
+    name: 'Administrator',
+    email,
+    role: 'admin',
+    passwordHash: await hashPassword(password),
+    createdAt: new Date(),
+  });
+}
+
 export async function seedUsers(db: Database, password: string) {
   const existing = await db.select({ id: users.id }).from(users).limit(1);
   if (existing.length) return;

@@ -40,7 +40,8 @@ function uniqueViolation(err: unknown): never {
 export function createProductionService({ db, config }: { db: Database; config: Config }) {
   const audit = createAuditService(db, config.AUDIT_SECRET);
 
-  async function validateFields(tx: Tx, input: Fields) {
+  /** References must be active, except ones the record already uses and keeps (they may have been retired since). */
+  async function validateFields(tx: Tx, input: Fields, current?: typeof production.$inferSelect) {
     const errors: Record<string, string> = {};
     if (input.productionDate > todayIn(config.APP_TIMEZONE))
       errors.productionDate = 'Production date cannot be in the future.';
@@ -61,6 +62,7 @@ export function createProductionService({ db, config }: { db: Database; config: 
       ['companyId', companies, input.companyId, 'Select an active company.'],
     ] as const;
     for (const [field, table, id, message] of checks) {
+      if (current && current[field] === id) continue;
       const [row] = await tx
         .select({ id: table.id })
         .from(table)
@@ -164,7 +166,7 @@ export function createProductionService({ db, config }: { db: Database; config: 
           row.operatorRepresentative !== next.operatorRepresentative;
         if (!changes.length && !nonCriticalChanged) return load(tx, id);
 
-        await validateFields(tx, input);
+        await validateFields(tx, input, row);
         try {
           await tx
             .update(production)
@@ -242,9 +244,11 @@ export function createProductionService({ db, config }: { db: Database; config: 
     },
 
     async verify(id: number) {
-      const [row] = await db.select().from(production).where(eq(production.id, id));
-      if (!row) throw notFound('Production record');
-      return audit.verify(id, snapshotOf(row));
+      return db.transaction(async (tx) => {
+        const [row] = await tx.select().from(production).where(eq(production.id, id));
+        if (!row) throw notFound('Production record');
+        return audit.verify(id, snapshotOf(row), tx);
+      });
     },
 
     verifyAll: () => audit.verifyAll(),

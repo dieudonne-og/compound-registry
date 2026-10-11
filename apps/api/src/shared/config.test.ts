@@ -22,4 +22,15 @@ describe('loadConfig', () => {
   it('rejects an unknown time zone', () => {
     expect(() => loadConfig({ ...base, APP_TIMEZONE: 'Mars/Olympus' })).toThrow(/APP_TIMEZONE/);
   });
+
+  it('trusts no proxy unless told how many hops there are', () => {
+    expect(loadConfig(base).TRUST_PROXY).toBe(0);
+    expect(loadConfig({ ...base, TRUST_PROXY: '1' }).TRUST_PROXY).toBe(1);
+  });
+
+  it('marks cookies Secure in production unless explicitly disabled for plain-HTTP local runs', () => {
+    expect(loadConfig(base).COOKIE_SECURE).toBe(false);
+    expect(loadConfig({ ...base, NODE_ENV: 'production' }).COOKIE_SECURE).toBe(true);
+    expect(loadConfig({ ...base, NODE_ENV: 'production', COOKIE_SECURE: 'false' }).COOKIE_SECURE).toBe(false);
+  });
 });

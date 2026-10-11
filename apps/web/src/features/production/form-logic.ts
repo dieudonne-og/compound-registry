@@ -5,6 +5,7 @@ import {
   roundDecimal,
   type CriticalField,
   type ProductionRecord,
+  type ReferenceItem,
 } from '@cr/contracts';
 
 export const CRITICAL_LABELS: Record<CriticalField, string> = {
@@ -93,4 +94,16 @@ export function productionFormSchema(original?: ProductionRecord, today = localT
       });
     }
   });
+}
+
+/** Select options from active reference items, plus the record's current item if it has since been retired. */
+export function optionsWithCurrent(
+  items: ReferenceItem[] | undefined,
+  current?: { id: number; name: string },
+) {
+  const options = (items ?? []).map((i) => ({ value: i.id, label: i.name, hint: i.code }));
+  if (current && !options.some((o) => o.value === current.id)) {
+    options.push({ value: current.id, label: `${current.name} (retired)`, hint: null });
+  }
+  return options;
 }

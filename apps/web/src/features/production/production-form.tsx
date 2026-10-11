@@ -34,6 +34,7 @@ import { useReference, useSaveProduction } from './api';
 import {
   changedCriticalFields,
   CRITICAL_LABELS,
+  optionsWithCurrent,
   productionFormSchema,
   toFormValues,
   type ProductionFormValues,
@@ -87,9 +88,6 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
   const refError = Object.values(refs).find((r) => r.error)?.error;
   if (refError)
     return <ErrorState error={refError} onRetry={() => Object.values(refs).forEach((r) => r.refetch())} />;
-
-  const options = (items: { id: number; name: string; code?: string | null }[] | undefined) =>
-    (items ?? []).map((i) => ({ value: i.id, label: i.name, hint: i.code }));
 
   // handleSubmit only calls this on submit, never during render, so reading refs here is safe.
   // eslint-disable-next-line react-hooks/refs
@@ -203,7 +201,7 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
                 render={({ field }) => (
                   <Combobox
                     id="mineralTypeId"
-                    options={options(refs.minerals.data)}
+                    options={optionsWithCurrent(refs.minerals.data, original?.mineralType)}
                     loading={refs.minerals.isLoading}
                     value={field.value}
                     onChange={field.onChange}
@@ -246,11 +244,11 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
           <CardContent className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
             {(
               [
-                ['companyId', 'Company', refs.companies],
-                ['businessLocationId', 'Business location', refs.locations],
-                ['traceabilityAgentId', 'Traceability agent', refs.agents],
+                ['companyId', 'Company', refs.companies, original?.company],
+                ['businessLocationId', 'Business location', refs.locations, original?.businessLocation],
+                ['traceabilityAgentId', 'Traceability agent', refs.agents, original?.traceabilityAgent],
               ] as const
-            ).map(([name, label, ref]) => (
+            ).map(([name, label, ref, current]) => (
               <FormField key={name} label={label} htmlFor={name} required error={err(name)}>
                 <Controller
                   control={control}
@@ -258,7 +256,7 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
                   render={({ field }) => (
                     <Combobox
                       id={name}
-                      options={options(ref.data)}
+                      options={optionsWithCurrent(ref.data, current)}
                       loading={ref.isLoading}
                       value={field.value}
                       onChange={field.onChange}

@@ -56,23 +56,28 @@ pnpm test:e2e           # starts the API on :3100 and the web app on :5174 again
 
 ### API
 
-| Variable            | Required   | Default                    | Purpose                                                                            |
-| ------------------- | ---------- | -------------------------- | ---------------------------------------------------------------------------------- |
-| `DATABASE_URL`      | yes        | —                          | MySQL connection, e.g. `mysql://cr:password@127.0.0.1:3306/compound_registry`      |
-| `JWT_SECRET`        | yes        | —                          | Signs session tokens; at least 32 characters                                       |
-| `AUDIT_SECRET`      | yes        | —                          | Keys the audit hash chain; at least 32 characters; see below                       |
-| `NODE_ENV`          | no         | `development`              | `production` enables secure cookies and disables demo data unless `SEED_DEMO=true` |
-| `PORT`              | no         | `3000`                     | API port                                                                           |
-| `STORAGE_DIR`       | no         | `./storage`                | Private folder for uploaded reports                                                |
-| `MAX_UPLOAD_MB`     | no         | `10`                       | Upload size limit                                                                  |
-| `OCR_LANGS`         | no         | `eng+fra`                  | Tesseract languages                                                                |
-| `WEB_ORIGIN`        | no         | `http://localhost:5173`    | Allowed browser origin (CORS)                                                      |
-| `APP_TIMEZONE`      | no         | `Africa/Kigali`            | Business time zone for "today" (production dates, monthly figures)                 |
-| `LOG_LEVEL`         | no         | `info`                     | `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`                     |
-| `SEED_DEMO`         | no         | —                          | `true` seeds sample production records even in production mode                     |
-| `SEED_PASSWORD`     | no         | `Demo!2026`                | Password of the seeded demo accounts                                               |
-| `TEST_DATABASE_URL` | tests only | `…/compound_registry_test` | Integration test database                                                          |
-| `E2E_DATABASE_URL`  | tests only | `…/compound_registry_e2e`  | End-to-end test database                                                           |
+| Variable                         | Required                     | Default                    | Purpose                                                                                                                                                              |
+| -------------------------------- | ---------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                   | yes                          | —                          | MySQL connection, e.g. `mysql://cr:password@127.0.0.1:3306/compound_registry`                                                                                        |
+| `JWT_SECRET`                     | yes                          | —                          | Signs session tokens; at least 32 characters                                                                                                                         |
+| `AUDIT_SECRET`                   | yes                          | —                          | Keys the audit hash chain; at least 32 characters; see below                                                                                                         |
+| `NODE_ENV`                       | no                           | `development`              | `production` turns on `Secure` cookies (see `COOKIE_SECURE`) and replaces the demo accounts with one administrator (see `ADMIN_EMAIL`)                               |
+| `PORT`                           | no                           | `3000`                     | API port                                                                                                                                                             |
+| `STORAGE_DIR`                    | no                           | `./storage`                | Private folder for uploaded reports                                                                                                                                  |
+| `MAX_UPLOAD_MB`                  | no                           | `10`                       | Upload size limit                                                                                                                                                    |
+| `OCR_LANGS`                      | no                           | `eng+fra`                  | Tesseract languages                                                                                                                                                  |
+| `WEB_ORIGIN`                     | no                           | `http://localhost:5173`    | Allowed browser origin (CORS)                                                                                                                                        |
+| `APP_TIMEZONE`                   | no                           | `Africa/Kigali`            | Business time zone for "today" (production dates, monthly figures)                                                                                                   |
+| `LOG_LEVEL`                      | no                           | `info`                     | `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`                                                                                                       |
+| `SEED_DEMO`                      | no                           | —                          | `true` seeds the demo accounts and sample production records even in production mode                                                                                 |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production without demo data | —                          | First administrator, created only when the database has no users; the password needs at least 12 characters. Start-up stops with a clear message if they are missing |
+| `COOKIE_SECURE`                  | no                           | `true` in production       | Set `false` only when serving over plain HTTP (the local Compose quick start)                                                                                        |
+| `TRUST_PROXY`                    | no                           | `0`                        | Number of reverse proxies in front of the API; their `X-Forwarded-For` entry becomes the client address used for rate limiting. Compose sets `1` (nginx)             |
+| `OCR_CONCURRENCY`                | no                           | `2`                        | Text-recognition runs allowed at once (CPU-bound)                                                                                                                    |
+| `EXTRACTION_BUDGET_SECONDS`      | no                           | `150`                      | Time allowed to read one report; keep it below the proxy timeout (nginx: 180 s)                                                                                      |
+| `SEED_PASSWORD`                  | no                           | `Demo!2026`                | Password of the seeded demo accounts                                                                                                                                 |
+| `TEST_DATABASE_URL`              | tests only                   | `…/compound_registry_test` | Integration test database                                                                                                                                            |
+| `E2E_DATABASE_URL`               | tests only                   | `…/compound_registry_e2e`  | End-to-end test database                                                                                                                                             |
 
 ### Web (build time)
 
@@ -83,7 +88,7 @@ pnpm test:e2e           # starts the API on :3100 and the web app on :5174 again
 
 ### Docker Compose
 
-`DB_PASSWORD`, `DB_ROOT_PASSWORD`, `JWT_SECRET`, `AUDIT_SECRET`, `WEB_ORIGIN`, `APP_TIMEZONE`, `MAX_UPLOAD_MB`, `SEED_DEMO` and `SEED_PASSWORD` are read from `.env`.
+`DB_PASSWORD`, `DB_ROOT_PASSWORD`, `JWT_SECRET`, `AUDIT_SECRET`, `WEB_ORIGIN`, `APP_TIMEZONE`, `MAX_UPLOAD_MB`, `SEED_DEMO`, `SEED_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `COOKIE_SECURE`, `OCR_CONCURRENCY` and `SHOW_DEMO_ACCOUNTS` (web build) are read from `.env`. The quick start runs over plain HTTP, so Compose sets `COOKIE_SECURE=false` by default.
 
 ## Database
 
@@ -102,9 +107,9 @@ pnpm test:e2e           # starts the API on :3100 and the web app on :5174 again
 
 ## Production checklist
 
-- Put HTTPS in front of the `web` container (a load balancer or reverse proxy); cookies are marked `Secure` in production.
-- Set `NODE_ENV=production`, leave `SEED_DEMO` unset and build the web image with `VITE_SHOW_DEMO_ACCOUNTS=false`.
-- Use long random values for `JWT_SECRET`, `AUDIT_SECRET`, `DB_PASSWORD` and `DB_ROOT_PASSWORD`; change or remove the demo accounts.
+- Put HTTPS in front of the `web` container (a load balancer or reverse proxy) and set `COOKIE_SECURE=true`. If that proxy adds its own `X-Forwarded-For` hop, raise `TRUST_PROXY` accordingly.
+- Set `NODE_ENV=production`, set `SEED_DEMO=false`, provide `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the first administrator, and build the web image with `SHOW_DEMO_ACCOUNTS=false`.
+- Use long random values for `JWT_SECRET`, `AUDIT_SECRET`, `DB_PASSWORD` and `DB_ROOT_PASSWORD`.
 - Give the application's MySQL user rights on its own database only, and never `TRIGGER` or `DROP` in production, so the audit table stays append-only.
 - Back up the database and the uploads volume together: `mysqldump --single-transaction compound_registry` plus a copy of the storage folder.
 - Set `WEB_ORIGIN` to the public address.

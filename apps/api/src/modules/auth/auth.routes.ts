@@ -8,7 +8,7 @@ import { newCsrfToken } from './csrf';
 
 export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   const auth = createAuthService(app.db);
-  const secure = app.config.NODE_ENV === 'production';
+  const secure = app.config.COOKIE_SECURE;
   const base = { httpOnly: true, sameSite: 'strict' as const, secure };
 
   const startSession = async (reply: FastifyReply, user: SessionUser, refreshToken: string) => {

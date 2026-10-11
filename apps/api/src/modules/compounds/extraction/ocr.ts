@@ -36,7 +36,8 @@ export function recognize(png: Buffer, opts: { langs: string; psm: 4 | 6 }): Pro
         'preserve_interword_spaces=1',
         'tsv',
       ],
-      { timeout: 90_000 },
+      // One thread per run: concurrency is controlled by the caller, not by Tesseract.
+      { timeout: 90_000, env: { ...process.env, OMP_THREAD_LIMIT: '1' } },
     );
     let out = '';
     let err = '';

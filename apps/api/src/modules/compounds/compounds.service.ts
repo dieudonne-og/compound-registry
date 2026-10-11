@@ -19,6 +19,7 @@ import { AppError, forbidden, notFound } from '../../shared/errors';
 import type { Storage } from '../../shared/storage';
 import { inspectUpload } from './extraction/intake';
 import { extractReport } from './extraction/pipeline';
+import { createSemaphore } from '../../shared/semaphore';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 type StoredResult = {
@@ -40,6 +41,7 @@ export function createCompoundService({
   storage: Storage;
   config: Config;
 }) {
+  const ocrLimit = createSemaphore(config.OCR_CONCURRENCY);
   const summaryFields = {
     row: compound,
     fileName: compoundExtraction.originalName,
@@ -73,7 +75,10 @@ export function createCompoundService({
       user: SessionUser;
     }): Promise<ExtractionResult> {
       const { mime, ext } = await inspectUpload(input.buffer, input.filename);
-      const outcome = await extractReport(input.buffer, mime, config.OCR_LANGS);
+      const outcome = await extractReport(input.buffer, mime, config.OCR_LANGS, {
+        deadline: Date.now() + config.EXTRACTION_BUDGET_SECONDS * 1000,
+        ocrLimit,
+      });
       const sha256 = createHash('sha256').update(input.buffer).digest('hex');
 
       const [previous] = await db

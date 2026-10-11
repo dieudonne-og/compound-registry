@@ -8,7 +8,7 @@ RUN pnpm install --frozen-lockfile --filter @cr/web...
 COPY tsconfig.base.json ./
 COPY packages/contracts packages/contracts
 COPY apps/web apps/web
-ARG VITE_SHOW_DEMO_ACCOUNTS=true
+ARG VITE_SHOW_DEMO_ACCOUNTS=false
 ARG VITE_MAX_UPLOAD_MB=10
 ENV VITE_SHOW_DEMO_ACCOUNTS=$VITE_SHOW_DEMO_ACCOUNTS VITE_MAX_UPLOAD_MB=$VITE_MAX_UPLOAD_MB
 RUN pnpm --filter @cr/web build

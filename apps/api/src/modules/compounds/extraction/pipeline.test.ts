@@ -40,3 +40,15 @@ describe.each(cases)('sample report $file', (expected) => {
     expect(outcome.unmapped.map((u) => u.label)).toEqual(expect.arrayContaining(expected.unmapped));
   }, 120_000);
 });
+
+describe('extraction time budget', () => {
+  it('stops with a clear reason instead of running past the deadline', async () => {
+    const photo = readFileSync(new URL('xrf-screen-photo.jpg', dir));
+    await expect(
+      extractReport(photo, 'image/jpeg', 'eng+fra', { deadline: Date.now() - 1 }),
+    ).rejects.toMatchObject({
+      code: 'EXTRACTION_FAILED',
+      details: { reason: 'too_slow' },
+    });
+  });
+});

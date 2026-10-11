@@ -83,7 +83,9 @@ Every change to the production ID, tag number, weight or mineral type appends an
 hash = HMAC-SHA256(AUDIT_SECRET, canonical JSON of the event including prev_hash)
 ```
 
-Database triggers reject updates and deletions on the event table. Verification recomputes the chain and checks that the sequence has no gaps, that each event links to the one before it, that every hash matches, and that replaying the history reproduces the current record. Together these detect edited events, deleted events (including the latest), records changed directly in the database and chains rebuilt without the secret. The integration tests tamper with the database in each of these ways and assert that verification fails.
+Database triggers reject updates and deletions on the event table. Verification reads the record and its events from one consistent snapshot, recomputes the chain and checks that the sequence has no gaps, that each event links to the one before it, that every hash matches, and that replaying the history reproduces the current record. This detects edited events, deleted events in the middle of a history, deletion of the latest event when the record keeps its current values, records changed directly in the database and chains rebuilt without the secret. The integration tests tamper with the database in each of these ways and assert that verification fails.
+
+**Limits.** Someone with full database access who also removes the triggers can delete a record's most recent events _and_ roll the record back to the values before them, or delete a record together with its whole history; nothing left in the database contradicts that. Detecting it needs a copy of the chain heads kept outside the database (for example, a daily signed export or a public timestamp), which the data model supports but this version does not include.
 
 ## Project structure
 
