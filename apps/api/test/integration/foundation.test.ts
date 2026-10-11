@@ -49,7 +49,7 @@ describe('foundation', () => {
 
   it('installs append-only triggers on the audit table', async () => {
     const [triggers] = await t.pool.query<RowDataPacket[]>(
-      "SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE EVENT_OBJECT_TABLE = 'production_audit_event'",
+      "SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND EVENT_OBJECT_TABLE = 'production_audit_event'",
     );
     expect(triggers.map((r) => r.TRIGGER_NAME).sort()).toEqual([
       'trg_audit_no_delete',
