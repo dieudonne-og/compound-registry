@@ -160,13 +160,14 @@ export function Component() {
                     <FieldError id="purchaseId-error" message={errors.purchaseId} />
                   </div>
                   <div className="space-y-2">
-                    <Label>
+                    <Label id="report-label">
                       Laboratory report{' '}
                       <span className="text-destructive" aria-hidden>
                         *
                       </span>
                     </Label>
                     <Dropzone
+                      labelledBy="report-label"
                       file={file}
                       onFile={(f) => {
                         setFile(f);

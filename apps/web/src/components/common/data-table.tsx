@@ -56,6 +56,10 @@ export function DataTable<T>({
                 {hg.headers.map((h) => (
                   <TableHead
                     key={h.id}
+                    aria-sort={
+                      (h.column.columnDef.meta as { ariaSort?: 'ascending' | 'descending' | 'none' })
+                        ?.ariaSort
+                    }
                     className={cn(
                       'h-10 text-xs font-medium text-muted-foreground',
                       (h.column.columnDef.meta as { className?: string })?.className,

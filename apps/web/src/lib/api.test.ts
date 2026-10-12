@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError } from './api';
+import { api, ApiError, ensureSession } from './api';
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -73,5 +73,35 @@ describe('api', () => {
   it('reports network failures clearly', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await expect(api('/production')).rejects.toMatchObject({ code: 'NETWORK_ERROR', status: 0 });
+  });
+
+  it('renews an expired session before a plain link is opened', async () => {
+    document.cookie = 'csrf_token=abc123';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(json(401, { error: { code: 'UNAUTHENTICATED', message: 'x', requestId: 'r' } }))
+      .mockResolvedValueOnce(json(200, { user: {} }))
+      .mockResolvedValueOnce(json(200, { user: {} }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(ensureSession()).resolves.toBe(true);
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+      '/api/auth/me',
+      '/api/auth/refresh',
+      '/api/auth/me',
+    ]);
+  });
+
+  it('announces the end of the session when it cannot be renewed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(json(401, { error: { code: 'UNAUTHENTICATED', message: 'x', requestId: 'r' } })),
+    );
+    const ended = vi.fn();
+    window.addEventListener('session-expired', ended);
+    await expect(ensureSession()).resolves.toBe(false);
+    window.removeEventListener('session-expired', ended);
+    expect(ended).toHaveBeenCalledOnce();
   });
 });

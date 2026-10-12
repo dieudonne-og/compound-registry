@@ -3,6 +3,7 @@ import { useParams } from 'react-router';
 import { ExternalLink, Info } from 'lucide-react';
 import { COMPOUND_CATALOG } from '@cr/contracts';
 import { formatDateTime, formatPercent } from '@/lib/format';
+import { openWithSession } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +40,15 @@ export function Component() {
         description={data.extractionDate ? `Extracted ${formatDateTime(data.extractionDate)}` : undefined}
         actions={
           <Button variant="outline" asChild>
-            <a href={`/api/compounds/${data.id}/file`} target="_blank" rel="noopener noreferrer">
+            <a
+              href={`/api/compounds/${data.id}/file`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.preventDefault();
+                void openWithSession(`/api/compounds/${data.id}/file`);
+              }}
+            >
               <ExternalLink /> Original report
             </a>
           </Button>

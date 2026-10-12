@@ -4,9 +4,15 @@ import { Button } from '@/components/ui/button';
 import { ACCEPT, MAX_UPLOAD_MB, validateReportFile } from '@/lib/files';
 import { cn } from '@/lib/utils';
 
-type Props = { file: File | null; onFile: (file: File | null) => void; error?: string; describedBy?: string };
+type Props = {
+  file: File | null;
+  onFile: (file: File | null) => void;
+  error?: string;
+  describedBy?: string;
+  labelledBy?: string;
+};
 
-export function Dropzone({ file, onFile, error, describedBy }: Props) {
+export function Dropzone({ file, onFile, error, describedBy, labelledBy }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -59,6 +65,7 @@ export function Dropzone({ file, onFile, error, describedBy }: Props) {
           setDragging(false);
           pick(e.dataTransfer.files[0]);
         }}
+        aria-labelledby={labelledBy}
         aria-describedby={[hintId, describedBy].filter(Boolean).join(' ')}
         aria-invalid={!!message}
         className={cn(

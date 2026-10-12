@@ -4,6 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, Factory, Plus, Search, X } from 'lucide-react';
 import type { ProductionRecord, ReferenceKind } from '@cr/contracts';
 import { formatDate, formatDateTime, formatKg } from '@/lib/format';
+import { downloadWithSession } from '@/lib/api';
 import { useDebouncedValue } from '@/lib/use-debounced';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,6 @@ function SortHeader({
       className="inline-flex items-center gap-1 hover:text-foreground"
       onClick={() => onSort(active && !desc ? `-${field}` : field)}
       aria-label={`Sort by ${label}`}
-      aria-sort={active ? (desc ? 'descending' : 'ascending') : 'none'}
     >
       {label}
       <Icon className="size-3.5" />
@@ -128,6 +128,9 @@ export function Component() {
   const query = useProductionList({ ...filters, page, pageSize: PAGE_SIZE });
   const filtered = Object.entries(filters).some(([k, v]) => k !== 'sort' && v);
 
+  const ariaSortFor = (field: string) =>
+    sort.replace('-', '') === field ? (sort.startsWith('-') ? 'descending' : 'ascending') : 'none';
+
   const columns: ColumnDef<ProductionRecord, unknown>[] = [
     {
       header: 'Production ID',
@@ -135,11 +138,13 @@ export function Component() {
     },
     {
       id: 'tag',
+      meta: { ariaSort: ariaSortFor('tagNumber') },
       header: () => <SortHeader label="Tag" field="tagNumber" sort={sort} onSort={(s) => set({ sort: s })} />,
       cell: ({ row }) => <span className="num">{row.original.tagNumber}</span>,
     },
     {
       id: 'date',
+      meta: { ariaSort: ariaSortFor('productionDate') },
       header: () => (
         <SortHeader label="Date" field="productionDate" sort={sort} onSort={(s) => set({ sort: s })} />
       ),
@@ -151,7 +156,7 @@ export function Component() {
     },
     {
       id: 'weight',
-      meta: { className: 'text-right' },
+      meta: { className: 'text-right', ariaSort: ariaSortFor('weightKg') },
       header: () => (
         <SortHeader label="Weight" field="weightKg" sort={sort} onSort={(s) => set({ sort: s })} />
       ),
@@ -169,6 +174,7 @@ export function Component() {
     },
     {
       id: 'updated',
+      meta: { ariaSort: ariaSortFor('createdAt') },
       header: () => (
         <SortHeader label="Created" field="createdAt" sort={sort} onSort={(s) => set({ sort: s })} />
       ),
@@ -186,7 +192,14 @@ export function Component() {
         actions={
           <>
             <Button variant="outline" asChild>
-              <a href={`/api/production/export.csv?${toQueryString(filters)}`} download>
+              <a
+                href={`/api/production/export.csv?${toQueryString(filters)}`}
+                download
+                onClick={(e) => {
+                  e.preventDefault();
+                  void downloadWithSession(`/api/production/export.csv?${toQueryString(filters)}`);
+                }}
+              >
                 <Download /> Export CSV
               </a>
             </Button>

@@ -92,3 +92,33 @@ export async function api<T>(
   if (!res.ok) throw toApiError(res.status, body);
   return body as T;
 }
+
+/** Makes sure the session is valid (renewing it if needed) before a plain link hits the API. */
+export async function ensureSession(): Promise<boolean> {
+  try {
+    await api('/auth/me');
+    return true;
+  } catch {
+    window.dispatchEvent(new Event('session-expired'));
+    return false;
+  }
+}
+
+/** Opens an API URL in a new tab after renewing the session; the tab opens first so pop-up blockers allow it. */
+export async function openWithSession(url: string) {
+  const tab = window.open('about:blank', '_blank');
+  if (!(await ensureSession())) return tab?.close();
+  if (tab) {
+    tab.opener = null;
+    tab.location.href = url;
+  }
+}
+
+/** Downloads an API URL after renewing the session. */
+export async function downloadWithSession(url: string) {
+  if (!(await ensureSession())) return;
+  const link = Object.assign(document.createElement('a'), { href: url, download: '' });
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
