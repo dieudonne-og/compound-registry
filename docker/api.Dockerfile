@@ -9,7 +9,7 @@ COPY tsconfig.base.json ./
 COPY packages/contracts packages/contracts
 COPY apps/api apps/api
 RUN pnpm --filter @cr/api build && pnpm --filter @cr/api deploy --prod /out \
- && cp -r apps/api/dist /out/dist && cp -r apps/api/src/db/migrations /out/dist/migrations
+ && cp -r apps/api/src/db/migrations /out/dist/migrations
 
 FROM node:22-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng tesseract-ocr-fra poppler-utils \

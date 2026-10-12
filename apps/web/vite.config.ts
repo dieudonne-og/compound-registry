@@ -10,5 +10,5 @@ export default defineConfig({
     port: Number(process.env.WEB_PORT ?? 5173),
     proxy: { '/api': { target: process.env.API_URL ?? 'http://localhost:3000', changeOrigin: false } },
   },
-  build: { sourcemap: true },
+  build: { sourcemap: false },
 });

@@ -52,6 +52,9 @@ services:
         VITE_MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
     depends_on: [api]
     ports: ['8080:80']
+    environment:
+      # Upload limit plus room for the multipart envelope.
+      CLIENT_MAX_BODY_SIZE: ${CLIENT_MAX_BODY_SIZE:-12m}
 
 volumes:
   db-data:

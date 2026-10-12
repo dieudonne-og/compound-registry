@@ -14,6 +14,8 @@ ENV VITE_SHOW_DEMO_ACCOUNTS=$VITE_SHOW_DEMO_ACCOUNTS VITE_MAX_UPLOAD_MB=$VITE_MA
 RUN pnpm --filter @cr/web build
 
 FROM nginx:1.27-alpine
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Rendered at start-up by the nginx image (envsubst), e.g. CLIENT_MAX_BODY_SIZE.
+COPY docker/nginx.conf /etc/nginx/templates/default.conf.template
+ENV CLIENT_MAX_BODY_SIZE=12m
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 EXPOSE 80
