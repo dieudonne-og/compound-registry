@@ -5,12 +5,15 @@ import { promisify } from 'node:util';
 
 const run = promisify(execFile);
 
-/** Renders one PDF page to a 300 DPI PNG with poppler. */
+/**
+ * Renders one PDF page with poppler. The long side is fixed at 3500 px (about 300 DPI for A4),
+ * which also caps memory use for oversized pages.
+ */
 export async function rasterizePage(pdfPath: string, page: number, dir: string): Promise<Buffer> {
   const prefix = path.join(dir, `page-${page}`);
   await run(
     'pdftoppm',
-    ['-r', '300', '-png', '-singlefile', '-f', String(page), '-l', String(page), pdfPath, prefix],
+    ['-scale-to', '3500', '-png', '-singlefile', '-f', String(page), '-l', String(page), pdfPath, prefix],
     {
       timeout: 60_000,
     },

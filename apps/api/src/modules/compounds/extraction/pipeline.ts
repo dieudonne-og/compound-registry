@@ -76,7 +76,13 @@ async function ocrBest(image: Buffer, langs: string, opts: ExtractOptions): Prom
   const timeLeft = opts.deadline === undefined || opts.deadline - Date.now() > ESCALATION_MS;
   if (strong || !timeLeft) return best.lines;
 
-  const extra = await runOcr(await alternativePreparations(image), [6], langs, opts);
+  let alternatives: Buffer[];
+  try {
+    alternatives = await alternativePreparations(image);
+  } catch {
+    throw extractionFailed('unreadable');
+  }
+  const extra = await runOcr(alternatives, [6], langs, opts);
   return votedLines([...runs, ...extra].map((r) => r.parsed));
 }
 

@@ -9,7 +9,14 @@ import { purgeIdempotencyKeys } from './modules/production/idempotency';
 
 const config = loadConfig();
 const { db, pool } = createDb(config.DATABASE_URL);
-await runMigrations(pool);
+// Schema changes may run under a separate account, so the application account needs no TRIGGER/DROP rights.
+if (process.env.MIGRATION_DATABASE_URL) {
+  const migrator = createDb(process.env.MIGRATION_DATABASE_URL);
+  await runMigrations(migrator.pool);
+  await migrator.pool.end();
+} else {
+  await runMigrations(pool);
+}
 await seed({ db, config }, { demo: process.env.SEED_DEMO === 'true' || config.NODE_ENV !== 'production' });
 
 const app = await buildApp({ config, db, pool });
