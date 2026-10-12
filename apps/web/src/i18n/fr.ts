@@ -654,4 +654,85 @@ export const webFr: Shape<typeof webEn> = {
       empty: 'Aucune activité pour le moment.',
     },
   },
+  help: {
+    open: 'Aide',
+    title: 'Centre d’aide',
+    description: 'Guides, raccourcis clavier et personne à contacter.',
+    search: 'Rechercher dans l’aide',
+    noResults: 'Aucun article ne correspond à votre recherche.',
+    openLink: 'Ouvrir la page',
+    shortcutsTitle: 'Raccourcis clavier',
+    then: 'puis',
+    shortcuts: {
+      help: 'Ouvrir cette aide',
+      search: 'Rechercher des pages et des enregistrements',
+      dashboard: 'Aller au tableau de bord',
+      production: 'Aller aux enregistrements de production',
+      compounds: 'Aller aux analyses de composés',
+      upload: 'Aller au téléversement d’un rapport',
+    },
+    contact: 'Besoin d’aide supplémentaire ? Contactez votre administrateur à l’adresse {email}.',
+    contactNone: 'Besoin d’aide supplémentaire ? Contactez votre administrateur.',
+    tour: 'Faire la visite guidée',
+    whatIsThis: 'Qu’est-ce que c’est ?',
+    articles: {
+      upload: {
+        title: 'Téléverser et vérifier un rapport',
+        steps: {
+          '1': 'Ouvrez Téléverser un rapport et saisissez le numéro d’achat de la demande d’analyse.',
+          '2': 'Déposez le PDF, le scan ou la photo du rapport, ou parcourez vos fichiers. Les fichiers PDF, JPG, JPEG et PNG jusqu’à 10 Mo sont acceptés.',
+          '3': 'Patientez pendant la lecture des valeurs. Les scans et les photos prennent plus de temps que les PDF au texte sélectionnable.',
+          '4': 'Comparez chaque valeur avec le document affiché à côté. Corrigez une valeur, ou cochez « Semble correct » pour chaque valeur à vérifier.',
+          '5': 'Choisissez Confirmer et enregistrer. C’est seulement alors que les valeurs sont enregistrées dans la table Compound.',
+        },
+      },
+      confidence: {
+        title: 'Comprendre la confiance et les signalements',
+        steps: {
+          '1': 'Chaque valeur indique la confiance de la reconnaissance de texte : vert pour élevée, orange pour moyenne et rouge pour faible.',
+          '2': 'Les valeurs sous 85 % ou dont le nom de composé est approximatif sont listées sous À vérifier et doivent être contrôlées avant l’enregistrement.',
+          '3': 'Une barre oblique, n.d. ou <LOD sur le rapport signifie non mesuré : la valeur reste vide, jamais à zéro.',
+          '4': 'Les valeurs imprimées sur le rapport sans colonne correspondante sont listées sous Trouvé mais non enregistré.',
+        },
+      },
+      production: {
+        title: 'Enregistrer une production',
+        steps: {
+          '1': 'Ouvrez Enregistrer une production.',
+          '2': 'Saisissez le numéro d’étiquette et la date de production, puis choisissez le type de minerai, l’entreprise, le site d’activité et l’agent de traçabilité dans les listes.',
+          '3': 'Saisissez le poids en kilogrammes : supérieur à zéro, avec au plus 3 décimales.',
+          '4': 'Choisissez Enregistrer. L’identifiant de production est généré automatiquement.',
+        },
+      },
+      verify: {
+        title: 'Vérifier l’historique d’un enregistrement',
+        steps: {
+          '1': 'Ouvrez un enregistrement de production.',
+          '2': 'L’historique des modifications liste chaque changement de l’identifiant, du numéro d’étiquette, du poids et du type de minerai, avec l’auteur, la date et le motif.',
+          '3': 'Choisissez Vérifier l’intégrité. L’empreinte de chaque entrée est recalculée et comparée à l’enregistrement stocké.',
+          '4': '« Historique intact » signifie que rien n’a été modifié. « Falsification détectée » indique le premier problème trouvé : signalez-le à votre administrateur.',
+        },
+      },
+      admin: {
+        title: 'Gérer les utilisateurs et les données de référence',
+        steps: {
+          '1': 'Ouvrez Utilisateurs pour ajouter des personnes. Chaque nouvel utilisateur reçoit un mot de passe temporaire, affiché une seule fois, qu’il doit changer à la première connexion.',
+          '2': 'Désactivez un compte pour déconnecter la personne immédiatement. Ses enregistrements et son historique sont conservés.',
+          '3': 'Ouvrez Données de référence pour ajouter, renommer, retirer ou réactiver des entreprises, des sites, des agents et des types de minerai. Les entrées retirées restent sur les enregistrements existants.',
+          '4': 'Ouvrez Journal d’activité pour voir chaque modification administrative, avec les valeurs avant et après.',
+        },
+      },
+    },
+    tips: {
+      confidence:
+        'Le degré de certitude de la reconnaissance de texte pour ces valeurs, de 0 à 100 %. Les valeurs sous 85 % doivent être vérifiées avant l’enregistrement.',
+      unmapped:
+        'Des valeurs imprimées sur le rapport qui n’ont pas de colonne automatique dans la table Compound. Elles ne sont enregistrées que si vous les ajoutez.',
+      reason: 'Le motif est conservé dans l’historique inviolable et montré aux auditeurs.',
+      productionId:
+        'Généré au format PRD-année-numéro lors de l’enregistrement. Seuls les administrateurs peuvent le modifier, et la modification est consignée.',
+      integrity:
+        'Recalcule l’empreinte de chaque entrée de l’historique et compare le résultat à l’enregistrement tel qu’il est stocké actuellement.',
+    },
+  },
 };

@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { Link, useMatches } from 'react-router';
-import { Menu, Search } from 'lucide-react';
+import { CircleHelp, Menu, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Breadcrumb,
@@ -17,7 +17,15 @@ import { UserMenu } from './user-menu';
 
 type Crumb = { crumb?: string };
 
-export function Topbar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () => void }) {
+export function Topbar({
+  onMenu,
+  onSearch,
+  onHelp,
+}: {
+  onMenu: () => void;
+  onSearch: () => void;
+  onHelp: () => void;
+}) {
   const t = useT();
   const crumbs = useMatches()
     .filter((m) => (m.handle as Crumb | undefined)?.crumb)
@@ -64,6 +72,9 @@ export function Topbar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () 
           <kbd className="ml-auto hidden rounded border bg-muted px-1.5 font-mono text-[10px] sm:inline">
             ⌘K
           </kbd>
+        </Button>
+        <Button variant="ghost" size="icon" onClick={onHelp} aria-label={t('help.open')} data-tour="help">
+          <CircleHelp />
         </Button>
         <LanguageSwitch />
         <ThemeToggle />

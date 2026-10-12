@@ -1,3 +1,4 @@
+import { InfoTip } from '@/features/help/info-tip';
 import { Link, useParams } from 'react-router';
 import { Pencil } from 'lucide-react';
 import { useFormat, useT } from '@/i18n/i18n';
@@ -108,7 +109,10 @@ export function Component() {
           <aside className="lg:sticky lg:top-20 lg:self-start">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">{t('production.detail.integrity')}</CardTitle>
+                <CardTitle className="flex items-center gap-1 text-base">
+                  {t('production.detail.integrity')}
+                  <InfoTip textKey="help.tips.integrity" />
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <VerifyPanel id={r.id} />

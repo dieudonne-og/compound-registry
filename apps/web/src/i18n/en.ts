@@ -643,4 +643,85 @@ export const webEn = {
       empty: 'No activity yet.',
     },
   },
+  help: {
+    open: 'Help',
+    title: 'Help centre',
+    description: 'Guides, keyboard shortcuts and who to contact.',
+    search: 'Search help',
+    noResults: 'No articles match your search.',
+    openLink: 'Open the page',
+    shortcutsTitle: 'Keyboard shortcuts',
+    then: 'then',
+    shortcuts: {
+      help: 'Open this help',
+      search: 'Search pages and records',
+      dashboard: 'Go to the dashboard',
+      production: 'Go to production records',
+      compounds: 'Go to compound analyses',
+      upload: 'Go to upload a report',
+    },
+    contact: 'Need more help? Contact your administrator at {email}.',
+    contactNone: 'Need more help? Contact your administrator.',
+    tour: 'Take the tour',
+    whatIsThis: 'What is this?',
+    articles: {
+      upload: {
+        title: 'Upload and review a report',
+        steps: {
+          '1': 'Open Upload report and enter the purchase ID from the laboratory request.',
+          '2': 'Drop the PDF, scan or photo of the report, or browse for it. PDF, JPG, JPEG and PNG files up to 10 MB are accepted.',
+          '3': 'Wait while the values are read. Scans and photos take longer than PDFs with selectable text.',
+          '4': 'Compare each value with the document shown beside it. Correct a value, or tick “Looks correct” for each value marked for review.',
+          '5': 'Select Confirm and save. Only then are the values stored in the Compound table.',
+        },
+      },
+      confidence: {
+        title: 'Understand confidence and flags',
+        steps: {
+          '1': 'Each value shows how confident the text recognition is: green is high, amber is medium and red is low.',
+          '2': 'Values below 85 % or with an approximate compound name are listed under Needs review and must be checked before saving.',
+          '3': 'A slash, n.d. or <LOD on the report means not measured: the value stays empty, never zero.',
+          '4': 'Values printed on the report without a matching column are listed under Found but not saved.',
+        },
+      },
+      production: {
+        title: 'Register production',
+        steps: {
+          '1': 'Open Register production.',
+          '2': 'Enter the tag number and production date, and choose the mineral type, company, business location and traceability agent from the lists.',
+          '3': 'Enter the weight in kilograms: greater than zero, with up to 3 decimals.',
+          '4': 'Select Register. The production ID is generated automatically.',
+        },
+      },
+      verify: {
+        title: 'Verify a record’s history',
+        steps: {
+          '1': 'Open a production record.',
+          '2': 'The change history lists every change to the production ID, tag number, weight and mineral type, with who made it, when and why.',
+          '3': 'Select Verify integrity. Every entry’s fingerprint is recalculated and compared with the stored record.',
+          '4': '“History intact” means nothing was altered. “Tampering detected” names the first problem found: report it to your administrator.',
+        },
+      },
+      admin: {
+        title: 'Manage users and reference data',
+        steps: {
+          '1': 'Open Users to add people. Each new user gets a temporary password, shown once, which they must change at first sign-in.',
+          '2': 'Disable an account to sign the person out at once. Their records and history are kept.',
+          '3': 'Open Reference data to add, rename, retire or reactivate companies, locations, agents and mineral types. Retired entries stay on existing records.',
+          '4': 'Open Activity log to see every administrative change, with the values before and after.',
+        },
+      },
+    },
+    tips: {
+      confidence:
+        'How sure the text recognition is about these values, from 0 to 100 %. Values below 85 % must be checked before saving.',
+      unmapped:
+        'Values printed on the report that have no automatic column in the Compound table. They are not saved unless you add them.',
+      reason: 'The reason is stored in the tamper-evident history and shown to auditors.',
+      productionId:
+        'Generated as PRD-year-number when you register. Only administrators can change it, and the change is recorded.',
+      integrity:
+        'Recalculates the fingerprint of every history entry and compares the result with the record as it is stored now.',
+    },
+  },
 } as const;

@@ -1,3 +1,4 @@
+import { InfoTip } from '@/features/help/info-tip';
 import { useFormat, useT } from '@/i18n/i18n';
 import { useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router';
@@ -134,6 +135,7 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
           <CardContent className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
             <FormField
               label={t('production.fields.productionCode')}
+              tip={<InfoTip textKey="help.tips.productionId" />}
               htmlFor="productionCode"
               error={err('productionCode')}
               hint={
@@ -313,7 +315,13 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
                   fields: critical.map((f) => t(`production.fieldsInline.${f}`)).join(', '),
                 })}
               </p>
-              <FormField label={t('production.form.reason')} htmlFor="reason" required error={err('reason')}>
+              <FormField
+                label={t('production.form.reason')}
+                tip={<InfoTip textKey="help.tips.reason" />}
+                htmlFor="reason"
+                required
+                error={err('reason')}
+              >
                 <Textarea
                   id="reason"
                   rows={3}

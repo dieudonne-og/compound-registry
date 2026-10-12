@@ -1,3 +1,4 @@
+import { InfoTip } from '@/features/help/info-tip';
 import { useFormat, useT } from '@/i18n/i18n';
 import { warningText } from './warnings';
 import { useMemo, useState } from 'react';
@@ -110,6 +111,7 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
                 {t('compounds.review.pages', { count: result.pages })}
               </Badge>
               <ConfidenceChip value={result.overallConfidence} />
+              <InfoTip textKey="help.tips.confidence" />
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="ml-auto lg:hidden">
@@ -212,6 +214,7 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Info className="size-4 text-muted-foreground" /> {t('compounds.review.unmapped')}
+                <InfoTip textKey="help.tips.unmapped" />
               </CardTitle>
               <CardDescription>{t('compounds.review.unmappedHelp')}</CardDescription>
             </CardHeader>
