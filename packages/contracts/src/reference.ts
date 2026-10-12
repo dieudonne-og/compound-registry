@@ -8,6 +8,8 @@ export const referenceItem = z.object({
   name: z.string(),
   code: z.string().nullable(),
   active: z.boolean(),
+  /** Production records using this entry; counted only for administrators (`includeInactive=true`), else 0. */
+  usageCount: z.number().int(),
 });
 export type ReferenceItem = z.infer<typeof referenceItem>;
 

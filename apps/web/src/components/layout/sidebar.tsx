@@ -16,22 +16,23 @@ export function SidebarNav({
   const can = useCan();
   const t = useT();
   return (
-    <nav aria-label={t('nav.main')} className="flex flex-col gap-6">
+    <nav aria-label={t('nav.main')} className="flex flex-col gap-6" data-tour="nav">
       {NAV_SECTIONS.map((section) => {
         const items = section.items.filter((i) => !i.action || can(i.action));
         if (!items.length) return null;
         return (
-          <div key={section.title} className="space-y-1">
+          <div key={section.title} className="space-y-1" data-tour={section.tour}>
             {!collapsed && (
               <p className="px-3 text-xs font-medium text-muted-foreground">{t(section.title)}</p>
             )}
-            {items.map(({ to, label, icon: Icon, end }) => {
+            {items.map(({ to, label, icon: Icon, end, tour }) => {
               const link = (
                 <NavLink
                   key={to}
                   to={to}
                   end={end}
                   onClick={onNavigate}
+                  data-tour={tour}
                   className={({ isActive }) =>
                     cn(
                       'flex h-9 items-center gap-3 rounded-md px-3 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 focus-visible:outline-2 focus-visible:outline-ring',

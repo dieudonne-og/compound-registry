@@ -45,7 +45,8 @@ export const referenceRoutes: FastifyPluginAsyncZod = async (app) => {
         response: { 201: referenceItem, 409: errorBody },
       },
     },
-    async (request, reply) => reply.status(201).send(await service.create(request.params.kind, request.body)),
+    async (request, reply) =>
+      reply.status(201).send(await service.create(request.params.kind, request.body, request.user)),
   );
 
   app.patch(
@@ -59,6 +60,6 @@ export const referenceRoutes: FastifyPluginAsyncZod = async (app) => {
         response: { 200: referenceItem, 404: errorBody, 409: errorBody },
       },
     },
-    async (request) => service.update(request.params.kind, request.params.id, request.body),
+    async (request) => service.update(request.params.kind, request.params.id, request.body, request.user),
   );
 };

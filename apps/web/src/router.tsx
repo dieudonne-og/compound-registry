@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from 'react-router';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router';
 import { AppShell } from '@/components/layout/app-shell';
 import { RequireAuth } from '@/features/auth/require-auth';
 import { PageLoader } from '@/components/common/page-loader';
@@ -68,6 +68,28 @@ export const router = createBrowserRouter([
             path: ':id/edit',
             handle: { crumb: 'crumbs.edit' },
             lazy: () => import('@/features/production/production-form-page'),
+          },
+        ],
+      },
+      {
+        path: 'admin',
+        handle: { crumb: 'crumbs.admin' },
+        children: [
+          { index: true, element: <Navigate to="users" replace /> },
+          {
+            path: 'reference',
+            handle: { crumb: 'crumbs.adminReference' },
+            lazy: () => import('@/features/admin/reference-admin-page'),
+          },
+          {
+            path: 'users',
+            handle: { crumb: 'crumbs.adminUsers' },
+            lazy: () => import('@/features/admin/users-page'),
+          },
+          {
+            path: 'activity',
+            handle: { crumb: 'crumbs.adminActivity' },
+            lazy: () => import('@/features/admin/activity-page'),
           },
         ],
       },
