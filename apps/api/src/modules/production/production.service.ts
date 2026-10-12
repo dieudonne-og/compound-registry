@@ -23,6 +23,14 @@ import { filtersFor, orderFor, selectProduction, toRecord } from './production.q
 
 type Fields = Omit<CreateProductionInput, 'productionCode'>;
 
+/** Generated IDs use this format; reserving it means a supplied ID can never collide with a later record. */
+const GENERATED_CODE = /^PRD-\d{4}-\d{6}$/;
+const reservedCode = () =>
+  validationError({
+    productionCode:
+      'This format is reserved for generated IDs. Leave the ID empty to generate one, or use another format.',
+  });
+
 function uniqueViolation(err: unknown): never {
   if (isDuplicate(err, 'uq_production_tag')) {
     throw new AppError('TAG_NUMBER_TAKEN', 409, 'This tag number is already registered.', {
@@ -91,6 +99,7 @@ export function createProductionService({ db, config }: { db: Database; config: 
 
   return {
     async create(input: CreateProductionInput, user: SessionUser): Promise<ProductionRecord> {
+      if (input.productionCode && GENERATED_CODE.test(input.productionCode)) throw reservedCode();
       return db.transaction(async (tx) => {
         await validateFields(tx, input);
         const now = new Date();
@@ -147,6 +156,9 @@ export function createProductionService({ db, config }: { db: Database; config: 
           throw forbidden();
         if (changes.some((c) => c.field !== 'productionCode') && !can(user, 'production:update-critical'))
           throw forbidden();
+        if (changes.some((c) => c.field === 'productionCode') && GENERATED_CODE.test(input.productionCode)) {
+          throw reservedCode();
+        }
         if (changes.length && !input.reason) {
           throw new AppError(
             'REASON_REQUIRED',

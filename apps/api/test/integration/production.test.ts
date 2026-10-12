@@ -115,6 +115,25 @@ describe('creating records', () => {
     expect(future.json().error.details.fields.productionDate).toMatch(/future/);
   });
 
+  it('reserves the generated production ID format so it can never collide with a later record', async () => {
+    const res = await create(operator, body({ productionCode: 'PRD-2026-999999' }));
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error.details.fields.productionCode).toMatch(/reserved/);
+    const record = (await create(operator, body())).json();
+    const changed = await update(
+      admin,
+      record.id,
+      asUpdate(record, { productionCode: 'PRD-2026-888888', reason: 'Align with export ID' }),
+    );
+    expect(changed.statusCode).toBe(422);
+    const unchanged = await update(
+      admin,
+      record.id,
+      asUpdate(record, { operatorRepresentative: 'Someone Else' }),
+    );
+    expect(unchanged.statusCode).toBe(200); // its own generated ID stays valid
+  });
+
   it('rejects duplicate tag numbers regardless of case', async () => {
     await create(operator, body({ tagNumber: 'dup-001' }));
     const res = await create(operator, body({ tagNumber: 'DUP-001' }));
