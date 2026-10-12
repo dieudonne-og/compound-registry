@@ -20,4 +20,7 @@ export const referenceInput = z.object({
     .regex(/^[A-Z0-9]{1,8}$/)
     .optional(),
 });
-export const referencePatch = referenceInput.partial().extend({ active: z.boolean().optional() });
+export const referencePatch = referenceInput
+  .partial()
+  .extend({ active: z.boolean().optional() })
+  .refine((patch) => Object.keys(patch).length > 0, 'Provide at least one field to change');

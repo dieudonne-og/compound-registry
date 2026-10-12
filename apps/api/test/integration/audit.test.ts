@@ -3,6 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import type { RowDataPacket } from 'mysql2';
 import { createTestApp, login, request, type Session, type TestApp } from '../helpers';
+import { nextEvent, type StoredEvent } from '../../src/modules/audit/chain';
+import type { FieldChange } from '@cr/contracts';
 
 let t: TestApp;
 let supervisor: Session;
@@ -119,6 +121,42 @@ describe('tamper detection', () => {
     expect(await verify(id)).toMatchObject({
       status: 'tampered',
       failure: { seq: 2, reason: 'HASH_MISMATCH' },
+    });
+  });
+
+  it('detects a history rewritten by someone who does not have the secret', async () => {
+    const id = await recordWithHistory();
+    const [rows] = await t.pool.query<RowDataPacket[]>(
+      'SELECT * FROM production_audit_event WHERE production_id = ? ORDER BY seq',
+      [id],
+    );
+    let last: StoredEvent | null = null;
+    const forged = rows.map((r) => {
+      const changes = (r.changes as FieldChange[]).map((c) =>
+        c.field === 'weightKg' ? { ...c, to: '102.000' } : c,
+      );
+      last = nextEvent('a-guessed-secret-a-guessed-secret-1234', last, {
+        productionId: id,
+        eventType: r.event_type,
+        changes,
+        reason: r.reason,
+        actorId: r.actor_id,
+        actorLabel: r.actor_label,
+        occurredAt: new Date(r.occurred_at).toISOString(),
+      });
+      return last;
+    });
+    await withTriggersDisabled(async () => {
+      for (const e of forged) {
+        await t.pool.query(
+          'UPDATE production_audit_event SET changes = ?, prev_hash = ?, hash = ? WHERE production_id = ? AND seq = ?',
+          [JSON.stringify(e.changes), e.prevHash, e.hash, id, e.seq],
+        );
+      }
+    });
+    expect(await verify(id)).toMatchObject({
+      status: 'tampered',
+      failure: { seq: 1, reason: 'HASH_MISMATCH' },
     });
   });
 

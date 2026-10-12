@@ -40,6 +40,15 @@ describe('reference data', () => {
     expect(list.json().some((c: { id: number }) => c.id === id)).toBe(false);
   });
 
+  it('rejects an update with nothing to change', async () => {
+    const res = await request(t.app, admin, {
+      method: 'PATCH',
+      url: '/api/reference/companies/1',
+      payload: {},
+    });
+    expect(res.statusCode).toBe(422);
+  });
+
   it('rejects duplicate names', async () => {
     const res = await request(t.app, admin, {
       method: 'POST',
