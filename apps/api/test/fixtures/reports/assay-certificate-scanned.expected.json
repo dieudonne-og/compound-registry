@@ -1,0 +1,32 @@
+{
+  "file": "assay-certificate-scanned.pdf",
+  "mime": "application/pdf",
+  "method": "ocr",
+  "values": {
+    "sn_percent": "63.6300",
+    "moisture_percent": "0.0670",
+    "fe2o3_percent": "2.1600",
+    "sio2_percent": "11.3200",
+    "na2o_percent": "0.0100",
+    "mgo_percent": "0.0090",
+    "p2o5_percent": "0.2100",
+    "so3_percent": "0.3000",
+    "k2o_percent": "0.1800",
+    "tio2_percent": "1.1900",
+    "cr2o3_percent": "0.0500",
+    "mno_percent": "0.1300",
+    "zno_percent": "0.0300",
+    "as2o3_percent": "0.0800",
+    "rb2o_percent": "0.0200",
+    "y2o3_percent": "0.0060",
+    "zro2_percent": "0.5200",
+    "nb2o5_percent": "1.0600",
+    "hfo2_percent": "0.0800",
+    "ta2o5_percent": "1.6500",
+    "wo3_percent": "0.1000",
+    "u3o8_percent": "0.0160",
+    "tho2_percent": "0.0200"
+  },
+  "missing": [],
+  "unmapped": []
+}

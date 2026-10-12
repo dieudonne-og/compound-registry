@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+apps/api/storage
+apps/api/storage-*
+storage
+storage-*
+.git
+playwright-report
+test-results
+.env

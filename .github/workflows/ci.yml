@@ -1,0 +1,73 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: cr
+          MYSQL_PASSWORD: cr_dev_password
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot" --health-interval 5s --health-retries 20
+    env:
+      TEST_DATABASE_URL: mysql://cr:cr_dev_password@127.0.0.1:3306/compound_registry_test
+      E2E_DATABASE_URL: mysql://cr:cr_dev_password@127.0.0.1:3306/compound_registry_e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-fra poppler-utils
+      - name: Prepare databases
+        run: |
+          mysql -h127.0.0.1 -uroot -proot -e "SET GLOBAL log_bin_trust_function_creators = 1;
+            CREATE DATABASE compound_registry_test; CREATE DATABASE compound_registry_e2e;
+            GRANT ALL ON compound_registry_test.* TO 'cr'@'%'; GRANT ALL ON compound_registry_e2e.* TO 'cr'@'%';"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:integration
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: playwright-report, path: playwright-report }
+
+  containers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure secrets
+        run: |
+          cp .env.example .env
+          sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/; s/^AUDIT_SECRET=.*/AUDIT_SECRET=$(openssl rand -hex 32)/" .env
+      - run: docker compose up --build -d
+      - name: Wait for the stack
+        run: |
+          for i in $(seq 1 90); do curl -fsS http://localhost:8080/api/health && exit 0; sleep 2; done
+          exit 1
+      - name: Web app is served
+        run: curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
+      - name: Sign in through nginx and use the session
+        run: |
+          curl -fsS -c jar -H 'content-type: application/json' \
+            -d '{"email":"operator@example.com","password":"Demo!2026"}' http://localhost:8080/api/auth/login
+          curl -fsS -b jar http://localhost:8080/api/auth/me | grep -q '"role":"operator"'
+      - name: Extract a text PDF and a scanned PDF inside the container
+        run: |
+          CSRF=$(awk '/csrf_token/ {print $7}' jar)
+          curl -fsS -b jar -H "x-csrf-token: $CSRF" -F purchaseId=PO-CI-1 \
+            -F file=@apps/api/test/fixtures/reports/analysis-certificate-text.pdf \
+            http://localhost:8080/api/compounds/extract | grep -q '"value":"58.7200"'
+          curl -fsS -b jar -H "x-csrf-token: $CSRF" -F purchaseId=PO-CI-2 \
+            -F file=@apps/api/test/fixtures/reports/analysis-report-image-only.pdf \
+            http://localhost:8080/api/compounds/extract | grep -q '"value":"57.5700"'
+      - name: Container logs
+        if: failure()
+        run: docker compose logs --no-color

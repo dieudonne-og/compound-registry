@@ -30,12 +30,12 @@ Plus the general requirements: migrations that preserve existing data, authentic
 
 The provided files shape the extraction design:
 
-| Sample | Nature | Implications |
-|---|---|---|
-| `9439c877…Certificate of Assay…pdf` | Scanner output with an existing low-quality text layer (`Si02雪11.32`, `問go`) | Text layers must be quality-scored; fall back to OCR. Zero/letter-O confusion inside formulas (`Na20`, `U308`), decimal commas (`0,067`). 23 compounds. |
-| `bbe45a01.Assay Report…pdf` | Image-only PDF from a phone scan, yellow watermark over the value | OCR with colour removal. Single value `Sn = 57.57`; every other column stays `NULL`. |
-| `ec17f3c6.Assay Report…pdf` | Text-based PDF exported from a spreadsheet, French labels | Table layout, Unicode subscripts (`Nb₂O₅`), `/` means missing → `NULL`. Sample weight `320.3` must be ignored. |
-| `12359825…Certificate of Assay…jpg` | Photo of a handheld XRF analyzer screen | Second number per line is ±2σ uncertainty, not a value. `Nb`, `Y`, `Zr`, `Se` have no element columns → unmapped, never written into oxide columns. `Zn` → `zn_percent`, not `zno_percent`. List is truncated by the screen. |
+| Sample                              | Nature                                                                         | Implications                                                                                                                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `9439c877…Certificate of Assay…pdf` | Scanner output with an existing low-quality text layer (`Si02雪11.32`, `問go`) | Text layers must be quality-scored; fall back to OCR. Zero/letter-O confusion inside formulas (`Na20`, `U308`), decimal commas (`0,067`). 23 compounds.                                                                      |
+| `bbe45a01.Assay Report…pdf`         | Image-only PDF from a phone scan, yellow watermark over the value              | OCR with colour removal. Single value `Sn = 57.57`; every other column stays `NULL`.                                                                                                                                         |
+| `ec17f3c6.Assay Report…pdf`         | Text-based PDF exported from a spreadsheet, French labels                      | Table layout, Unicode subscripts (`Nb₂O₅`), `/` means missing → `NULL`. Sample weight `320.3` must be ignored.                                                                                                               |
+| `12359825…Certificate of Assay…jpg` | Photo of a handheld XRF analyzer screen                                        | Second number per line is ±2σ uncertainty, not a value. `Nb`, `Y`, `Zr`, `Se` have no element columns → unmapped, never written into oxide columns. `Zn` → `zn_percent`, not `zno_percent`. List is truncated by the screen. |
 
 ### Provided `Compound.sql` issues
 
@@ -82,19 +82,19 @@ Principles:
 
 ### Stack
 
-| Concern | Choice |
-|---|---|
-| Database | MySQL 8 (InnoDB, utf8mb4) |
-| API | Node 22, Fastify, Drizzle ORM, zod, pino |
-| PDF text | pdfjs-dist |
-| PDF rasterization | pdftoppm (poppler-utils) |
-| OCR | Tesseract 5 (`eng`, `fra`) |
-| Image preprocessing | sharp |
-| File type detection | file-type |
-| Password hashing | argon2 |
-| Web | React 18, Vite, Tailwind, shadcn/ui, TanStack Query, TanStack Table, react-hook-form, Recharts |
-| Tests | Vitest, Supertest-style `fastify.inject`, Playwright |
-| Delivery | Docker Compose, GitHub Actions CI |
+| Concern             | Choice                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| Database            | MySQL 8 (InnoDB, utf8mb4)                                                                      |
+| API                 | Node 22, Fastify, Drizzle ORM, zod, pino                                                       |
+| PDF text            | poppler `pdftotext` / `pdfinfo`                                                                |
+| PDF rasterization   | pdftoppm (poppler-utils)                                                                       |
+| OCR                 | Tesseract 5 (`eng`, `fra`)                                                                     |
+| Image preprocessing | sharp                                                                                          |
+| File type detection | file-type                                                                                      |
+| Password hashing    | argon2                                                                                         |
+| Web                 | React 19, Vite, Tailwind, shadcn/ui, TanStack Query, TanStack Table, react-hook-form, Recharts |
+| Tests               | Vitest, Supertest-style `fastify.inject`, Playwright                                           |
+| Delivery            | Docker Compose, GitHub Actions CI                                                              |
 
 ## 4. Data model
 
@@ -106,22 +106,22 @@ Principles:
 
 ### 4.2 compound_extraction (new)
 
-| Column | Type | Notes |
-|---|---|---|
-| id | CHAR(36) PK | UUID, returned to the client as `extractionId` |
-| compound_id | INT NULL, FK → Compound.id, unique | Set when the user confirms |
-| status | ENUM('pending','confirmed','expired') | |
-| original_name | VARCHAR(255) | |
-| mime_type | VARCHAR(64) | Detected from content |
-| size_bytes | INT | |
-| sha256 | CHAR(64), indexed | Duplicate-upload warning |
-| storage_key | VARCHAR(255) | Random name in private storage |
-| method | ENUM('text-layer','ocr','hybrid') | |
-| overall_confidence | DECIMAL(5,4) | |
-| raw_text | MEDIUMTEXT | |
-| result | JSON | Fields, unmapped values, warnings |
-| created_by | BIGINT FK → users.id | |
-| created_at, expires_at | DATETIME | Pending extractions expire after 24 h |
+| Column                 | Type                                  | Notes                                          |
+| ---------------------- | ------------------------------------- | ---------------------------------------------- |
+| id                     | CHAR(36) PK                           | UUID, returned to the client as `extractionId` |
+| compound_id            | INT NULL, FK → Compound.id, unique    | Set when the user confirms                     |
+| status                 | ENUM('pending','confirmed','expired') |                                                |
+| original_name          | VARCHAR(255)                          |                                                |
+| mime_type              | VARCHAR(64)                           | Detected from content                          |
+| size_bytes             | INT                                   |                                                |
+| sha256                 | CHAR(64), indexed                     | Duplicate-upload warning                       |
+| storage_key            | VARCHAR(255)                          | Random name in private storage                 |
+| method                 | ENUM('text-layer','ocr','hybrid')     |                                                |
+| overall_confidence     | DECIMAL(5,4)                          |                                                |
+| raw_text               | MEDIUMTEXT                            |                                                |
+| result                 | JSON                                  | Fields, unmapped values, warnings              |
+| created_by             | BIGINT FK → users.id                  |                                                |
+| created_at, expires_at | DATETIME                              | Pending extractions expire after 24 h          |
 
 `Compound.file_path` stores the storage key of the confirmed file.
 
@@ -133,37 +133,37 @@ Principles:
 
 ### 4.4 production
 
-| Column | Type | Notes |
-|---|---|---|
-| id | BIGINT AUTO_INCREMENT PK | Internal, never changes; the audit chain is keyed on it |
-| production_code | VARCHAR(32) UNIQUE | The business "ID"; generated as `PRD-YYYY-NNNNNN` unless supplied; changeable by admin only, with a reason |
-| tag_number | VARCHAR(32) UNIQUE | |
-| production_date | DATE | Not in the future |
-| mineral_type_id | FK → mineral_types | |
-| weight_kg | DECIMAL(12,3) | `CHECK (weight_kg > 0)` |
-| business_location_id | FK → business_locations | |
-| traceability_agent_id | FK → traceability_agents | |
-| company_id | FK → companies | |
-| operator_representative | VARCHAR(120) | |
-| version | INT | Optimistic locking |
-| created_by, updated_by | FK → users | |
-| created_at, updated_at | DATETIME(3) | |
+| Column                  | Type                     | Notes                                                                                                      |
+| ----------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| id                      | BIGINT AUTO_INCREMENT PK | Internal, never changes; the audit chain is keyed on it                                                    |
+| production_code         | VARCHAR(32) UNIQUE       | The business "ID"; generated as `PRD-YYYY-NNNNNN` unless supplied; changeable by admin only, with a reason |
+| tag_number              | VARCHAR(32) UNIQUE       |                                                                                                            |
+| production_date         | DATE                     | Not in the future                                                                                          |
+| mineral_type_id         | FK → mineral_types       |                                                                                                            |
+| weight_kg               | DECIMAL(12,3)            | `CHECK (weight_kg > 0)`                                                                                    |
+| business_location_id    | FK → business_locations  |                                                                                                            |
+| traceability_agent_id   | FK → traceability_agents |                                                                                                            |
+| company_id              | FK → companies           |                                                                                                            |
+| operator_representative | VARCHAR(120)             |                                                                                                            |
+| version                 | INT                      | Optimistic locking                                                                                         |
+| created_by, updated_by  | FK → users               |                                                                                                            |
+| created_at, updated_at  | DATETIME(3)              |                                                                                                            |
 
 ### 4.5 production_audit_event
 
-| Column | Type | Notes |
-|---|---|---|
-| id | BIGINT AUTO_INCREMENT PK | |
-| production_id | BIGINT FK → production.id | |
-| seq | INT | Unique with production_id; 1…n without gaps |
-| event_type | ENUM('CREATE','UPDATE') | CREATE holds the original snapshot of critical fields |
-| changes | JSON | `[{ field, from, to }]`, critical fields only |
-| reason | TEXT NULL | Required on UPDATE |
-| actor_id | BIGINT | |
-| actor_label | VARCHAR(160) | Name and role at the time of the change |
-| occurred_at | DATETIME(3) | |
-| prev_hash | CHAR(64) | 64 zeros for the first event |
-| hash | CHAR(64) | See §6.2 |
+| Column        | Type                      | Notes                                                 |
+| ------------- | ------------------------- | ----------------------------------------------------- |
+| id            | BIGINT AUTO_INCREMENT PK  |                                                       |
+| production_id | BIGINT FK → production.id |                                                       |
+| seq           | INT                       | Unique with production_id; 1…n without gaps           |
+| event_type    | ENUM('CREATE','UPDATE')   | CREATE holds the original snapshot of critical fields |
+| changes       | JSON                      | `[{ field, from, to }]`, critical fields only         |
+| reason        | TEXT NULL                 | Required on UPDATE                                    |
+| actor_id      | BIGINT                    |                                                       |
+| actor_label   | VARCHAR(160)              | Name and role at the time of the change               |
+| occurred_at   | DATETIME(3)               |                                                       |
+| prev_hash     | CHAR(64)                  | 64 zeros for the first event                          |
+| hash          | CHAR(64)                  | See §6.2                                              |
 
 `BEFORE UPDATE` and `BEFORE DELETE` triggers raise `SQLSTATE '45000'`, making the table append-only for application connections.
 
@@ -216,7 +216,7 @@ key (PK with user_id), user_id, request_hash, status_code, response JSON, create
 
 ### 5.6 Review contract
 
-`POST /api/compounds/extract` → 
+`POST /api/compounds/extract` →
 
 ```json
 {
@@ -225,10 +225,17 @@ key (PK with user_id), user_id, request_hash, status_code, response JSON, create
   "pages": 1,
   "overallConfidence": 0.91,
   "fields": [
-    { "column": "sn_percent", "label": "Sn", "value": "57.5700", "rawText": "Sn = 57.57",
-      "confidence": 0.93, "uncertainty": null, "flags": [] }
+    {
+      "column": "sn_percent",
+      "label": "Sn",
+      "value": "57.5700",
+      "rawText": "Sn = 57.57",
+      "confidence": 0.93,
+      "uncertainty": null,
+      "flags": []
+    }
   ],
-  "unmapped": [ { "label": "Nb", "value": "18.04", "rawText": "Nb 18.04 0.81" } ],
+  "unmapped": [{ "label": "Nb", "value": "18.04", "rawText": "Nb 18.04 0.81" }],
   "warnings": [],
   "duplicateOf": null,
   "rawText": "…"
@@ -266,13 +273,13 @@ Canonical JSON uses sorted keys, no whitespace, ISO-8601 UTC timestamps and deci
 
 ### 6.4 Detected tampering scenarios (each has an integration test)
 
-| Scenario | Detected by |
-|---|---|
-| Event content edited | 3 |
-| Event deleted in the middle | 1, 2 |
-| Latest event deleted | 4 (and 1 when it was the only update) |
-| Production row edited directly in the database | 4 |
-| Chain rebuilt without the secret | 3 |
+| Scenario                                       | Detected by                           |
+| ---------------------------------------------- | ------------------------------------- |
+| Event content edited                           | 3                                     |
+| Event deleted in the middle                    | 1, 2                                  |
+| Latest event deleted                           | 4 (and 1 when it was the only update) |
+| Production row edited directly in the database | 4                                     |
+| Chain rebuilt without the secret               | 3                                     |
 
 ## 7. API
 
@@ -287,63 +294,69 @@ All routes under `/api`. OpenAPI generated from the shared schemas, served at `/
 
 ### 7.2 Permissions
 
-| Action | admin | supervisor | operator | auditor |
-|---|:-:|:-:|:-:|:-:|
-| compound:extract, compound:create | ✓ | ✓ | ✓ | — |
-| compound:read, compound:file | ✓ | ✓ | ✓ | ✓ |
-| production:create | ✓ | ✓ | ✓ | — |
-| production:update (non-critical) | ✓ | ✓ | own | — |
-| production:update-critical | ✓ | ✓ | — | — |
-| production:update-code | ✓ | — | — | — |
-| production:read | ✓ | ✓ | ✓ | ✓ |
-| audit:read, audit:verify | ✓ | ✓ | — | ✓ |
-| reference:manage | ✓ | — | — | — |
+| Action                            | admin | supervisor | operator | auditor |
+| --------------------------------- | :---: | :--------: | :------: | :-----: |
+| compound:extract, compound:create |   ✓   |     ✓      |    ✓     |    —    |
+| compound:read, compound:file      |   ✓   |     ✓      |    ✓     |    ✓    |
+| production:create                 |   ✓   |     ✓      |    ✓     |    —    |
+| production:update (non-critical)  |   ✓   |     ✓      |   own    |    —    |
+| production:update-critical        |   ✓   |     ✓      |    —     |    —    |
+| production:update-code            |   ✓   |     —      |    —     |    —    |
+| production:read                   |   ✓   |     ✓      |    ✓     |    ✓    |
+| audit:read, audit:verify          |   ✓   |     ✓      |    —     |    ✓    |
+| reference:manage                  |   ✓   |     —      |    —     |    —    |
 
 A single `can(user, action, resource?)` function in `packages/contracts` is used by the API guard and by the web app to hide unavailable controls.
 
 ### 7.3 Endpoints
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | /compounds/extract | Multipart upload; returns extraction for review |
-| POST | /compounds | Save reviewed values |
-| GET | /compounds | List; `page`, `pageSize`, `purchaseId`, `from`, `to` |
-| GET | /compounds/:id | Detail with extraction metadata |
-| GET | /compounds/:id/file | Stream original file (permission-checked, `nosniff`) |
-| POST | /production | Create (supports `Idempotency-Key`) |
-| GET | /production | List; `page`, `pageSize`, `q`, `mineralTypeId`, `companyId`, `locationId`, `from`, `to`, `sort` |
-| GET | /production/export.csv | Same filters, CSV |
-| GET | /production/:id | Detail |
-| PUT | /production/:id | Update; requires `version`; `reason` when critical fields change |
-| GET | /production/:id/history | Audit events |
-| GET | /production/:id/verify | Chain verification |
-| GET | /reference/{companies,locations,agents,mineral-types} | Active reference data |
-| POST, PATCH | /reference/… | Admin management |
-| GET | /dashboard/summary | Counts, weight by mineral, recent activity, chain health |
-| GET | /health | Liveness and database check |
+| Method      | Path                                                  | Purpose                                                                                         |
+| ----------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| POST        | /compounds/extract                                    | Multipart upload; returns extraction for review                                                 |
+| POST        | /compounds                                            | Save reviewed values                                                                            |
+| GET         | /compounds                                            | List; `page`, `pageSize`, `purchaseId`, `from`, `to`                                            |
+| GET         | /compounds/:id                                        | Detail with extraction metadata                                                                 |
+| GET         | /compounds/:id/file                                   | Stream original file (permission-checked, `nosniff`)                                            |
+| POST        | /production                                           | Create (supports `Idempotency-Key`)                                                             |
+| GET         | /production                                           | List; `page`, `pageSize`, `q`, `mineralTypeId`, `companyId`, `locationId`, `from`, `to`, `sort` |
+| GET         | /production/export.csv                                | Same filters, CSV                                                                               |
+| GET         | /production/:id                                       | Detail                                                                                          |
+| PUT         | /production/:id                                       | Update; requires `version`; `reason` when critical fields change                                |
+| GET         | /production/:id/history                               | Audit events                                                                                    |
+| GET         | /production/:id/verify                                | Chain verification                                                                              |
+| GET         | /reference/{companies,locations,agents,mineral-types} | Active reference data                                                                           |
+| POST, PATCH | /reference/…                                          | Admin management                                                                                |
+| GET         | /dashboard/summary                                    | Counts, weight by mineral, recent activity, chain health                                        |
+| GET         | /health                                               | Liveness and database check                                                                     |
 
 ### 7.4 Errors
 
 ```json
-{ "error": { "code": "TAG_NUMBER_TAKEN", "message": "Tag number T-0045 is already registered.",
-             "details": { "field": "tagNumber" }, "requestId": "…" } }
+{
+  "error": {
+    "code": "TAG_NUMBER_TAKEN",
+    "message": "Tag number T-0045 is already registered.",
+    "details": { "field": "tagNumber" },
+    "requestId": "…"
+  }
+}
 ```
 
-| Code | HTTP |
-|---|---|
-| VALIDATION_FAILED (with `details.fields`) | 422 |
-| REASON_REQUIRED | 422 |
-| EXTRACTION_FAILED (with a user-facing hint) | 422 |
-| UNAUTHENTICATED | 401 |
-| FORBIDDEN | 403 |
-| NOT_FOUND | 404 |
-| VERSION_CONFLICT | 409 |
-| TAG_NUMBER_TAKEN, PRODUCTION_CODE_TAKEN | 409 |
-| EXTRACTION_EXPIRED | 410 |
-| FILE_TOO_LARGE | 413 |
-| UNSUPPORTED_FILE_TYPE | 415 |
-| RATE_LIMITED | 429 |
-| INTERNAL_ERROR | 500 |
+| Code                                        | HTTP |
+| ------------------------------------------- | ---- |
+| VALIDATION_FAILED (with `details.fields`)   | 422  |
+| REASON_REQUIRED                             | 422  |
+| EXTRACTION_FAILED (with a user-facing hint) | 422  |
+| UNAUTHENTICATED                             | 401  |
+| FORBIDDEN                                   | 403  |
+| NOT_FOUND                                   | 404  |
+| VERSION_CONFLICT                            | 409  |
+| TAG_NUMBER_TAKEN, PRODUCTION_CODE_TAKEN     | 409  |
+| EXTRACTION_EXPIRED                          | 410  |
+| FILE_TOO_LARGE                              | 413  |
+| UNSUPPORTED_FILE_TYPE                       | 415  |
+| RATE_LIMITED                                | 429  |
+| INTERNAL_ERROR                              | 500  |
 
 Every response carries a `requestId`, also present in structured logs. Internal error details are never returned.
 
@@ -367,12 +380,12 @@ Helmet headers, CORS restricted to the web origin, body and upload size limits, 
 2. **Dashboard** — tiles (records this month, total kg, reports processed, items needing review), weight by mineral chart, recent activity, chain health.
 3. **Compound upload** — three steps:
    1. Purchase ID and drag-and-drop area with instant type/size checks.
-   2. Upload percentage, then named stages: *Reading document → Running OCR → Matching compounds*.
-   3. Review: document preview (zoomable) beside the fields on desktop, stacked on phone. Each field shows a confidence chip and its source text. Flagged fields are pinned at the top in amber; unmapped values in a separate panel; empty fields show "—". *Confirm and save* is enabled once flagged fields are corrected or explicitly accepted. Success toast with links to the record or a new upload.
+   2. Upload percentage, then named stages: _Reading document → Running OCR → Matching compounds_.
+   3. Review: document preview (zoomable) beside the fields on desktop, stacked on phone. Each field shows a confidence chip and its source text. Flagged fields are pinned at the top in amber; unmapped values in a separate panel; empty fields show "—". _Confirm and save_ is enabled once flagged fields are corrected or explicitly accepted. Success toast with links to the record or a new upload.
 4. **Compound records** — filterable table, detail page with link to the original file.
 5. **Production list** — server-side pagination, search, filters, sorting, CSV export; empty and skeleton states.
 6. **Production form** — searchable selects loaded from the API, date picker with no future dates, weight input with kg suffix. In edit mode critical fields show a lock icon; changing one reveals a required reason field. Unsaved-changes guard, disabled submit while pending, Idempotency-Key, version-conflict dialog offering a reload.
-7. **Record detail** — fields, vertical audit timeline (actor, time, from → to, reason, short hash) and a *Verify* action showing *Chain intact* or *Tampered at event #n* with the reason.
+7. **Record detail** — fields, vertical audit timeline (actor, time, from → to, reason, short hash) and a _Verify_ action showing _Chain intact_ or _Tampered at event #n_ with the reason.
 
 ### 8.3 Accessibility
 
@@ -397,14 +410,14 @@ Full keyboard support, visible focus, labelled inputs, `aria-live` error announc
 
 ### Environment variables
 
-| Variable | Purpose | Default |
-|---|---|---|
-| DATABASE_URL | MySQL connection | — (required) |
-| JWT_SECRET | Access token signing | — (required) |
-| AUDIT_SECRET | Audit chain HMAC key | — (required) |
-| STORAGE_DIR | Private upload directory | `./storage` |
-| MAX_UPLOAD_MB | Upload size limit | `10` |
-| OCR_LANGS | Tesseract languages | `eng+fra` |
-| WEB_ORIGIN | Allowed CORS origin | `http://localhost:5173` |
-| PORT | API port | `3000` |
-| NODE_ENV | Environment | `development` |
+| Variable      | Purpose                  | Default                 |
+| ------------- | ------------------------ | ----------------------- |
+| DATABASE_URL  | MySQL connection         | — (required)            |
+| JWT_SECRET    | Access token signing     | — (required)            |
+| AUDIT_SECRET  | Audit chain HMAC key     | — (required)            |
+| STORAGE_DIR   | Private upload directory | `./storage`             |
+| MAX_UPLOAD_MB | Upload size limit        | `10`                    |
+| OCR_LANGS     | Tesseract languages      | `eng+fra`               |
+| WEB_ORIGIN    | Allowed CORS origin      | `http://localhost:5173` |
+| PORT          | API port                 | `3000`                  |
+| NODE_ENV      | Environment              | `development`           |

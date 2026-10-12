@@ -1,0 +1,22 @@
+CREATE TABLE `compound_extraction` (
+  `id` CHAR(36) NOT NULL PRIMARY KEY,
+  `compound_id` INT NULL,
+  `status` ENUM('pending','confirmed','expired') NOT NULL DEFAULT 'pending',
+  `original_name` VARCHAR(255) NOT NULL,
+  `mime_type` VARCHAR(64) NOT NULL,
+  `size_bytes` INT NOT NULL,
+  `sha256` CHAR(64) NOT NULL,
+  `storage_key` VARCHAR(255) NOT NULL,
+  `method` ENUM('text-layer','ocr','hybrid') NOT NULL,
+  `overall_confidence` DECIMAL(5,4) NOT NULL,
+  `raw_text` MEDIUMTEXT NOT NULL,
+  `result` JSON NOT NULL,
+  `created_by` BIGINT NOT NULL,
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `expires_at` DATETIME(3) NOT NULL,
+  UNIQUE KEY `uq_extraction_compound` (`compound_id`),
+  KEY `idx_extraction_sha256` (`sha256`),
+  KEY `idx_extraction_status_expires` (`status`, `expires_at`),
+  CONSTRAINT `fk_extraction_compound` FOREIGN KEY (`compound_id`) REFERENCES `Compound` (`id`),
+  CONSTRAINT `fk_extraction_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
+);
