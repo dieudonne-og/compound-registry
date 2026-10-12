@@ -118,10 +118,22 @@ describe('auth', () => {
     expect(res.json().error.code).toBe('CSRF_FAILED');
   });
 
+  it('lets two tabs renew the same session at the same moment', async () => {
+    const s = await login(t.app, 'operator');
+    const first = await request(t.app, s, { method: 'POST', url: '/api/auth/refresh' });
+    // The second tab still holds the cookie from before the first tab's renewal.
+    const second = await request(t.app, s, { method: 'POST', url: '/api/auth/refresh' });
+    expect([first.statusCode, second.statusCode]).toEqual([200, 200]);
+  });
+
   it('rotates refresh tokens and revokes all sessions when an old token is reused', async () => {
     const s = await login(t.app, 'supervisor');
     const first = await request(t.app, s, { method: 'POST', url: '/api/auth/refresh' });
     expect(first.statusCode).toBe(200);
+    // Reuse is only tolerated for a few seconds (parallel tabs); age the rotation past that window.
+    await t.pool.query(
+      'UPDATE refresh_tokens SET revoked_at = revoked_at - INTERVAL 1 MINUTE WHERE revoked_at IS NOT NULL',
+    );
     const rotated = cookieHeader(first.headers['set-cookie']);
     const reuse = await request(t.app, s, { method: 'POST', url: '/api/auth/refresh' });
     expect(reuse.statusCode).toBe(401);

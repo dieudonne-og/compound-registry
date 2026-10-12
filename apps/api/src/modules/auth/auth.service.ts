@@ -6,6 +6,8 @@ import { refreshTokens, users } from '../../db/schema';
 import { hashPassword, verifyPassword } from './password';
 
 const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+/** A token rotated this recently may still arrive from a second tab; that is not treated as theft. */
+const REUSE_GRACE_MS = 10_000;
 // Verified against when the email is unknown, so response time does not reveal which emails exist.
 const dummyHash = hashPassword(randomBytes(16).toString('hex'));
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
@@ -45,7 +47,9 @@ export function createAuthService(db: Database) {
         .where(eq(refreshTokens.tokenHash, sha256(token)))
         .limit(1);
       if (!row || row.expiresAt < new Date()) return null;
-      if (row.revokedAt) {
+      const parallelTab =
+        row.revokedAt && row.replacedBy && Date.now() - row.revokedAt.getTime() < REUSE_GRACE_MS;
+      if (row.revokedAt && !parallelTab) {
         await db
           .update(refreshTokens)
           .set({ revokedAt: new Date() })
@@ -55,6 +59,7 @@ export function createAuthService(db: Database) {
       const [user] = await db.select().from(users).where(eq(users.id, row.userId)).limit(1);
       if (!user?.active) return null;
       const next = await issueRefreshToken(user.id);
+      if (parallelTab) return { user: toSession(user), token: next.token };
       await db
         .update(refreshTokens)
         .set({ revokedAt: new Date(), replacedBy: next.id })
