@@ -156,3 +156,10 @@ Known limit, stated in the README and API reference: someone with full database 
 - CSV export with protection against spreadsheet formula injection.
 - Duplicate-upload warning, confidence score per value, side-by-side document preview.
 - First administrator created from environment variables in production; no demo accounts unless requested.
+- English and French throughout: every screen, number and date format, and the API's error messages (`Accept-Language`); the choice is saved with the account.
+- User administration: add users with a one-time temporary password, change roles, disable accounts, reset passwords; the last administrator is protected and every change is logged.
+- Reference-data screens for companies, locations, agents and mineral types, showing how many production records use each entry before it is retired.
+- Activity log of administrative changes with filters.
+- Settings: password change (forced after a temporary password), theme, table density, page size and date style.
+- Help centre: searchable how-to articles, keyboard shortcuts (`?`, `g` then a letter), explanation tips on confidence, unmapped values, production IDs, reasons and integrity, and an administrator contact.
+- A guided tour on first sign-in, limited to the screens the user's role can reach and replayable from the help panel.

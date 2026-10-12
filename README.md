@@ -11,6 +11,10 @@ A web application for mineral traceability teams. It does two jobs:
 | ------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
 | ![Dashboard](docs/screenshots/dashboard-dark.png) | ![Production detail](docs/screenshots/production-detail.png) | ![Phone](docs/screenshots/mobile-production-dark.png) |
 
+| The review screen in French                         | Managing users                             |
+| --------------------------------------------------- | ------------------------------------------ |
+| ![Review in French](docs/screenshots/review-fr.png) | ![Users](docs/screenshots/admin-users.png) |
+
 ## Quick start
 
 Requirements: Docker with Compose v2.
@@ -26,12 +30,14 @@ Open <http://localhost:8080>. The API documentation is at <http://localhost:8080
 
 Demo accounts (password `Demo!2026`):
 
-| Email                    | Role          | Can                                                                                        |
-| ------------------------ | ------------- | ------------------------------------------------------------------------------------------ |
-| `admin@example.com`      | Administrator | Everything, including changing a production ID and managing reference data through the API |
-| `supervisor@example.com` | Supervisor    | Upload reports, register and correct production, view and verify history                   |
-| `operator@example.com`   | Operator      | Upload reports, register production, edit non-critical fields of own records               |
-| `auditor@example.com`    | Auditor       | Read everything, download reports, view and verify history                                 |
+| Email                    | Role          | Can                                                                               |
+| ------------------------ | ------------- | --------------------------------------------------------------------------------- |
+| `admin@example.com`      | Administrator | Everything, including changing a production ID, managing users and reference data |
+| `supervisor@example.com` | Supervisor    | Upload reports, register and correct production, view and verify history          |
+| `operator@example.com`   | Operator      | Upload reports, register production, edit non-critical fields of own records      |
+| `auditor@example.com`    | Auditor       | Read everything, download reports, view and verify history                        |
+
+Other accounts are added by an administrator under **Administration → Users**.
 
 To run without Docker, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-development).
 
@@ -51,11 +57,28 @@ To run without Docker, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-develop
 - Role-based editing: changes to the tag number, weight, mineral type or production ID require a reason and are added to the history; simultaneous edits are detected.
 - History timeline and a one-click integrity check per record; the dashboard checks every record.
 
+**Administration**
+
+- Users: add with a one-time temporary password, change role, disable, reset password. The last administrator cannot be removed.
+- Reference data: companies, locations, agents and mineral types, with the number of records using each entry before it is retired.
+- Activity log of every user and reference-data change, filterable by action and type.
+
+**Help and preferences**
+
+- English and French on every screen, including number and date formats and server messages. The choice follows the account.
+- Help panel (`?`) with searchable how-to articles, keyboard shortcuts, explanation tips beside unfamiliar fields and an administrator contact.
+- A guided tour on first sign-in, adapted to the role and replayable from the help panel.
+- Settings: password change, theme, table density, page size and date style.
+
 **Platform**
 
 - Cookie sessions with refresh-token rotation, CSRF protection, login rate limiting and four roles enforced on the server.
 - Migrations that keep the provided `Compound` table and its data (see [Notes on the provided schema](#notes-on-the-provided-schema)).
 - Unit, integration and end-to-end tests; API reference; deployment guide; Docker Compose; CI workflow.
+
+## Languages
+
+The interface is available in English and French. It starts in the browser's language and can be switched from the globe button in the top bar or under **Settings**; the choice is saved with the account. The API answers in the language of the `Accept-Language` header: error codes stay the same and only the `message` texts change. Translations live in `packages/contracts/src/i18n` (shared with the API) and `apps/web/src/i18n`; the French files are typed against the English ones, so a missing translation fails the type check.
 
 ## How extraction works
 
@@ -90,9 +113,9 @@ Database triggers reject updates and deletions on the event table. Verification 
 ## Project structure
 
 ```
-apps/api            Fastify API: auth, compounds (extraction pipeline), production, audit, reference data, dashboard
-apps/web            React application: dashboard, upload and review, analyses, production registry
-packages/contracts  Validation schemas, compound catalogue, permissions and error codes shared by both apps
+apps/api            Fastify API: auth, compounds (extraction pipeline), production, audit, reference data, users and activity, preferences, dashboard
+apps/web            React application: dashboard, upload and review, analyses, production registry, administration, settings, help and tour
+packages/contracts  Validation schemas, compound catalogue, permissions, error codes and translations shared by both apps
 e2e                 Browser tests across the whole stack
 docker              Container images and web server configuration
 docs                API reference, deployment guide, system design
@@ -100,11 +123,11 @@ docs                API reference, deployment guide, system design
 
 ## Testing
 
-| Command                 | Covers                                                                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm test`             | Unit tests: shared schemas, extraction (including the four real reports), hash chain, CSV, web logic                                 |
-| `pnpm test:integration` | Every API endpoint against MySQL: permissions, validation, transactions, idempotency, concurrent edits, time zones, tamper detection |
-| `pnpm test:e2e`         | Browser tests: upload → review → save, registration → correction → verification → tamper detection, read-only auditor, phone layout  |
+| Command                 | Covers                                                                                                                                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm test`             | Unit tests: shared schemas, extraction (including the four real reports), hash chain, CSV, web logic                                                                                                 |
+| `pnpm test:integration` | Every API endpoint against MySQL: permissions, validation, transactions, idempotency, concurrent edits, time zones, tamper detection                                                                 |
+| `pnpm test:e2e`         | Browser tests: upload → review → save, registration → correction → verification → tamper detection, read-only auditor, phone layout, French, adding a user who must change the password, guided tour |
 
 Integration and end-to-end tests need a running MySQL and Tesseract; see the [deployment guide](docs/DEPLOYMENT.md#local-development).
 
