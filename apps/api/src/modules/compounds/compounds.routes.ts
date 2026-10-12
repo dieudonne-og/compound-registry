@@ -32,7 +32,7 @@ export const compoundRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (request) => {
       const file = await request.file();
-      if (!file) throw validationError({ file: 'Choose a laboratory report to upload.' });
+      if (!file) throw validationError({ file: 'validation.file.required' });
       const field = file.fields.purchaseId;
       const raw = field && !Array.isArray(field) && 'value' in field ? String(field.value) : '';
       const parsed = purchaseId.safeParse(raw);
@@ -41,7 +41,7 @@ export const compoundRoutes: FastifyPluginAsyncZod = async (app) => {
       // toBuffer() only throws if it sees the flag mid-stream; without this check an oversized
       // upload can slip through cut to the limit and be processed as if it were complete.
       if (file.file.truncated) {
-        throw new AppError('FILE_TOO_LARGE', 413, 'The file is larger than the allowed upload size.');
+        throw new AppError('FILE_TOO_LARGE', 413, 'errors.FILE_TOO_LARGE');
       }
       return service.extract({
         buffer,

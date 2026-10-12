@@ -66,8 +66,8 @@ describe('review state', () => {
   it('validates individual values', () => {
     expect(valueError('')).toBeNull();
     expect(valueError('57.57')).toBeNull();
-    expect(valueError('1.23456')).toMatch(/4 decimal/);
-    expect(valueError('abc')).toMatch(/4 decimal/);
+    expect(valueError('1.23456')).toBe('validation.percent.format'); // a key the screen translates
+    expect(valueError('abc')).toBe('validation.percent.format');
   });
 
   it('sends blanks as null, never zero', () => {

@@ -162,19 +162,15 @@ export function createCompoundService({
           .from(compoundExtraction)
           .where(eq(compoundExtraction.id, input.extractionId))
           .for('update');
-        if (!ext) throw notFound('Extraction');
+        if (!ext) throw notFound('extraction');
         if (ext.createdBy !== user.id && user.role !== 'admin') throw forbidden();
         if (ext.status === 'confirmed') {
-          throw new AppError('ALREADY_CONFIRMED', 409, 'These results have already been saved.', {
+          throw new AppError('ALREADY_CONFIRMED', 409, 'errors.ALREADY_CONFIRMED', {
             compoundId: ext.compoundId,
           });
         }
         if (ext.status === 'expired' || ext.expiresAt < new Date()) {
-          throw new AppError(
-            'EXTRACTION_EXPIRED',
-            410,
-            'This extraction has expired. Upload the report again.',
-          );
+          throw new AppError('EXTRACTION_EXPIRED', 410, 'errors.EXTRACTION_EXPIRED');
         }
         const values = Object.fromEntries(COMPOUND_COLUMNS.map((c) => [c, input.values[c] ?? null]));
         const [res] = await tx.insert(compound).values({
@@ -220,7 +216,7 @@ export function createCompoundService({
         .from(compound)
         .leftJoin(compoundExtraction, eq(compoundExtraction.compoundId, compound.id))
         .where(eq(compound.id, id));
-      if (!r) throw notFound('Compound record');
+      if (!r) throw notFound('compound');
       const stored = r.result as StoredResult | null;
       return {
         ...toSummary(r),
@@ -241,7 +237,7 @@ export function createCompoundService({
         .from(compound)
         .leftJoin(compoundExtraction, eq(compoundExtraction.compoundId, compound.id))
         .where(eq(compound.id, id));
-      if (!r?.key) throw notFound('Report file');
+      if (!r?.key) throw notFound('file');
       return {
         stream: storage.stream(r.key),
         name: r.name ?? 'report',

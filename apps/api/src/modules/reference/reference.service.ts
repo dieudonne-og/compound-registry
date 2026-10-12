@@ -22,7 +22,7 @@ const toItem = (r: Row): ReferenceItem => ({
 
 function duplicate(err: unknown): never {
   if (isDuplicate(err, 'name') || isDuplicate(err, 'code')) {
-    throw new AppError('DUPLICATE_NAME', 409, 'An entry with this name or code already exists.');
+    throw new AppError('DUPLICATE_NAME', 409, 'errors.DUPLICATE_NAME');
   }
   throw err;
 }
@@ -37,7 +37,7 @@ export function createReferenceService(db: Database) {
 
     async create(kind: ReferenceKind, input: { name: string; code?: string }): Promise<ReferenceItem> {
       if (kind === 'mineral-types' && !input.code)
-        throw validationError({ code: 'Mineral types need a short code, e.g. SN.' });
+        throw validationError({ code: 'validation.reference.codeRequired' });
       const table = REFERENCE_TABLES[kind];
       const values = {
         name: input.name,
@@ -64,7 +64,7 @@ export function createReferenceService(db: Database) {
         duplicate(err);
       }
       const [row] = (await db.select().from(table).where(eq(table.id, id))) as Row[];
-      if (!row) throw notFound('Entry');
+      if (!row) throw notFound('entry');
       return toItem(row);
     },
   };

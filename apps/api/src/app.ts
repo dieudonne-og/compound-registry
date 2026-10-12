@@ -18,6 +18,7 @@ import { z } from 'zod';
 import type { Config } from './shared/config';
 import type { Database, Pool } from './db/client';
 import { AppError, errorHandler } from './shared/errors';
+import { languagePlugin, tr } from './shared/i18n';
 import { authPlugin } from './modules/auth/auth.plugin';
 import { authRoutes } from './modules/auth/auth.routes';
 import { compoundRoutes } from './modules/compounds/compounds.routes';
@@ -55,11 +56,16 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
   app.decorate('db', deps.db);
   app.decorate('pool', deps.pool);
   app.decorate('storage', createStorage(config.STORAGE_DIR));
+  await app.register(languagePlugin);
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((request, reply) =>
-    reply
-      .status(404)
-      .send({ error: { code: 'NOT_FOUND', message: 'Route not found.', requestId: request.id } }),
+    reply.status(404).send({
+      error: {
+        code: 'NOT_FOUND',
+        message: tr(request.language, 'errors.routeNotFound'),
+        requestId: request.id,
+      },
+    }),
   );
   app.addHook('onSend', async (request, reply) => {
     reply.header('x-request-id', request.id);
@@ -70,7 +76,7 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
   await app.register(cookie);
   await app.register(rateLimit, {
     global: false,
-    errorResponseBuilder: () => new AppError('RATE_LIMITED', 429, 'Too many requests. Please wait a moment.'),
+    errorResponseBuilder: () => new AppError('RATE_LIMITED', 429, 'errors.RATE_LIMITED'),
   });
   await app.register(multipart, {
     limits: { fileSize: config.MAX_UPLOAD_MB * 1024 * 1024, files: 1, fields: 5 },

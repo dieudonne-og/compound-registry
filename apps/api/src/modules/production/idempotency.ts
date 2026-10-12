@@ -27,14 +27,10 @@ export async function withIdempotency(
     if (!isDuplicate(err, 'PRIMARY')) throw err;
     const [existing] = await db.select().from(idempotencyKeys).where(where);
     if (existing?.requestHash !== requestHash) {
-      throw new AppError(
-        'IDEMPOTENCY_KEY_REUSED',
-        422,
-        'This request key was already used for different data.',
-      );
+      throw new AppError('IDEMPOTENCY_KEY_REUSED', 422, 'errors.IDEMPOTENCY_KEY_REUSED');
     }
     if (existing.statusCode === null) {
-      throw new AppError('REQUEST_IN_PROGRESS', 409, 'This request is still being processed. Please wait.');
+      throw new AppError('REQUEST_IN_PROGRESS', 409, 'errors.REQUEST_IN_PROGRESS');
     }
     return { status: existing.statusCode, body: existing.response, replayed: true };
   }

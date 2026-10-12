@@ -16,10 +16,5 @@ export async function csrfGuard(request: FastifyRequest, _reply: FastifyReply) {
     cookie.length > 0 &&
     cookie.length === header.length &&
     timingSafeEqual(Buffer.from(cookie), Buffer.from(header));
-  if (!ok)
-    throw new AppError(
-      'CSRF_FAILED',
-      403,
-      'Your session security token is missing or expired. Refresh the page.',
-    );
+  if (!ok) throw new AppError('CSRF_FAILED', 403, 'errors.CSRF_FAILED');
 }

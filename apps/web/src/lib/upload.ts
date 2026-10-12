@@ -1,4 +1,4 @@
-import { ApiError, csrfToken, refreshSession, toApiError } from './api';
+import { ApiError, csrfToken, getRequestLanguage, refreshSession, toApiError } from './api';
 
 /** POSTs multipart data with upload progress (fetch cannot report upload progress). */
 export function uploadWithProgress<T>(
@@ -14,6 +14,7 @@ export function uploadWithProgress<T>(
     xhr.withCredentials = true;
     xhr.responseType = 'json';
     xhr.setRequestHeader('x-csrf-token', csrfToken());
+    xhr.setRequestHeader('accept-language', getRequestLanguage());
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
     xhr.upload.onload = () => onProgress(100);
     xhr.onload = async () => {

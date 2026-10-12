@@ -31,7 +31,7 @@ export const authPlugin = fp(async (app) => {
     try {
       await request.jwtVerify();
     } catch {
-      throw new AppError('UNAUTHENTICATED', 401, 'Please sign in to continue.');
+      throw new AppError('UNAUTHENTICATED', 401, 'errors.UNAUTHENTICATED');
     }
   };
   app.decorate('authenticate', authenticate);

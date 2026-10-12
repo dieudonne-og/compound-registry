@@ -49,7 +49,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (request, reply) => {
       const user = await auth.login(request.body.email, request.body.password);
-      if (!user) throw new AppError('INVALID_CREDENTIALS', 401, 'Email or password is incorrect.');
+      if (!user) throw new AppError('INVALID_CREDENTIALS', 401, 'errors.INVALID_CREDENTIALS');
       const { token } = await auth.issueRefreshToken(user.id);
       await startSession(reply, user, token);
       return { user };
@@ -63,7 +63,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       const rotated = request.cookies.refresh_token ? await auth.rotate(request.cookies.refresh_token) : null;
       if (!rotated) {
         clearSession(reply);
-        throw new AppError('UNAUTHENTICATED', 401, 'Your session has ended. Please sign in again.');
+        throw new AppError('UNAUTHENTICATED', 401, 'errors.sessionEnded');
       }
       await startSession(reply, rotated.user, rotated.token);
       return { user: rotated.user };
