@@ -3,6 +3,7 @@ import { FlaskConical, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCan } from '@/features/auth/session';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useT } from '@/i18n/i18n';
 import { NAV_SECTIONS } from './nav';
 
 export function SidebarNav({
@@ -13,14 +14,17 @@ export function SidebarNav({
   onNavigate?: () => void;
 }) {
   const can = useCan();
+  const t = useT();
   return (
-    <nav aria-label="Main" className="flex flex-col gap-6">
+    <nav aria-label={t('nav.main')} className="flex flex-col gap-6">
       {NAV_SECTIONS.map((section) => {
         const items = section.items.filter((i) => !i.action || can(i.action));
         if (!items.length) return null;
         return (
           <div key={section.title} className="space-y-1">
-            {!collapsed && <p className="px-3 text-xs font-medium text-muted-foreground">{section.title}</p>}
+            {!collapsed && (
+              <p className="px-3 text-xs font-medium text-muted-foreground">{t(section.title)}</p>
+            )}
             {items.map(({ to, label, icon: Icon, end }) => {
               const link = (
                 <NavLink
@@ -37,13 +41,13 @@ export function SidebarNav({
                   }
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
-                  <span className={cn(collapsed && 'sr-only')}>{label}</span>
+                  <span className={cn(collapsed && 'sr-only')}>{t(label)}</span>
                 </NavLink>
               );
               return collapsed ? (
                 <Tooltip key={to}>
                   <TooltipTrigger asChild>{link}</TooltipTrigger>
-                  <TooltipContent side="right">{label}</TooltipContent>
+                  <TooltipContent side="right">{t(label)}</TooltipContent>
                 </Tooltip>
               ) : (
                 link
@@ -57,6 +61,7 @@ export function SidebarNav({
 }
 
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  const t = useT();
   return (
     <aside
       className={cn(
@@ -81,13 +86,13 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
       <button
         onClick={onToggle}
         className="m-3 flex h-9 items-center justify-center gap-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={collapsed ? t('layout.expandSidebar') : t('layout.collapseSidebar')}
       >
         {collapsed ? (
           <PanelLeftOpen className="size-4" />
         ) : (
           <>
-            <PanelLeftClose className="size-4" /> Collapse
+            <PanelLeftClose className="size-4" /> {t('layout.collapse')}
           </>
         )}
       </button>

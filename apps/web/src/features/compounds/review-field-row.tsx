@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/i18n';
 import { Check } from 'lucide-react';
 import type { ExtractedField } from '@cr/contracts';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,6 +26,7 @@ type Props = {
 };
 
 export function ReviewFieldRow({ field, value, accepted, onChange, onAccept }: Props) {
+  const t = useT();
   const id = `field-${field.column}`;
   const error = valueError(value);
   const flagged = field.flags.some((f) => f !== 'missing_marker');
@@ -59,7 +61,7 @@ export function ReviewFieldRow({ field, value, accepted, onChange, onAccept }: P
           </span>
         </div>
         <div id={`${id}-help`} className="space-y-1 text-xs">
-          {error && <p className="text-destructive">{error}</p>}
+          {error && <p className="text-destructive">{t(error)}</p>}
           {field.flags.map((f) => (
             <p key={f} className={cn(f === 'missing_marker' ? 'text-muted-foreground' : 'text-warning')}>
               {FLAG_TEXT[f]}

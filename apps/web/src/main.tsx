@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { queryClient } from '@/lib/query';
 import { ThemeProvider, useTheme } from '@/lib/theme';
+import { I18nProvider } from '@/i18n/i18n';
 import { router } from './router';
 import './styles.css';
 
@@ -16,13 +17,15 @@ function ThemedToaster() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider delayDuration={300}>
-          <RouterProvider router={router} />
-          <ThemedToaster />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <I18nProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider delayDuration={300}>
+            <RouterProvider router={router} />
+            <ThemedToaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </I18nProvider>
   </StrictMode>,
 );

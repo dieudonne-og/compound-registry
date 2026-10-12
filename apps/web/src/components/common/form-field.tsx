@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/i18n';
 import type { ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
 
@@ -12,6 +13,7 @@ type Props = {
 
 /** Label, control, hint and error with ids wired for screen readers (`${htmlFor}-error`). */
 export function FormField({ label, htmlFor, required, error, hint, children }: Props) {
+  const t = useT();
   return (
     <div className="space-y-2">
       <Label htmlFor={htmlFor}>
@@ -25,7 +27,7 @@ export function FormField({ label, htmlFor, required, error, hint, children }: P
       {children}
       {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
       <p id={`${htmlFor}-error`} className="text-sm text-destructive empty:hidden" aria-live="polite">
-        {error}
+        {error && t(error)}
       </p>
     </div>
   );
