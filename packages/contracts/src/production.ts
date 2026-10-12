@@ -129,7 +129,13 @@ export const verifyResult = z.object({
   status: z.enum(['intact', 'tampered']),
   eventsChecked: z.number().int(),
   failure: z
-    .object({ seq: z.number().int().nullable(), reason: z.enum(VERIFY_FAILURES), message: z.string() })
+    .object({
+      seq: z.number().int().nullable(),
+      reason: z.enum(VERIFY_FAILURES),
+      /** English text; screens translate from `reason` and `params`. */
+      message: z.string(),
+      params: z.record(z.union([z.string(), z.number()])).optional(),
+    })
     .optional(),
 });
 export type VerifyResult = z.infer<typeof verifyResult>;

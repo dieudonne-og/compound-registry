@@ -1,11 +1,12 @@
 import { Link } from 'react-router';
 import { Pencil, PlusCircle } from 'lucide-react';
 import type { DashboardSummary } from '@cr/contracts';
-import { formatRelative } from '@/lib/format';
-import { CRITICAL_LABELS } from '@/features/production/form-logic';
+import { useFormat, useT } from '@/i18n/i18n';
 
 export function RecentActivity({ items }: { items: DashboardSummary['recentActivity'] }) {
-  if (!items.length) return <p className="text-sm text-muted-foreground">No activity yet.</p>;
+  const t = useT();
+  const format = useFormat();
+  if (!items.length) return <p className="text-sm text-muted-foreground">{t('dashboard.noActivity')}</p>;
   return (
     <ul className="divide-y">
       {items.map((a, i) => {
@@ -21,11 +22,13 @@ export function RecentActivity({ items }: { items: DashboardSummary['recentActiv
                 <p>
                   <span className="num font-medium">{a.productionCode}</span>{' '}
                   {a.eventType === 'CREATE'
-                    ? 'registered'
-                    : `— ${a.fields.map((f) => CRITICAL_LABELS[f as keyof typeof CRITICAL_LABELS]?.toLowerCase() ?? f).join(', ')} changed`}
+                    ? t('dashboard.registered')
+                    : t('dashboard.changed', {
+                        fields: a.fields.map((f) => t(`production.fieldsInline.${f}`)).join(', '),
+                      })}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {a.actorLabel} · {formatRelative(a.occurredAt)}
+                  {a.actorLabel} · {format.relative(a.occurredAt)}
                 </p>
               </div>
             </Link>

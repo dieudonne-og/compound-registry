@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/i18n';
 import { useParams } from 'react-router';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/common/error-state';
@@ -7,6 +8,7 @@ import { ProductionForm } from './production-form';
 
 export function Component() {
   const { id } = useParams();
+  const t = useT();
   const editing = id !== undefined;
   const record = useProduction(Number(id), editing);
 
@@ -25,17 +27,13 @@ export function Component() {
         title={
           editing ? (
             <>
-              Edit <span className="num">{record.data!.productionCode}</span>
+              {t('production.page.edit')} <span className="num">{record.data!.productionCode}</span>
             </>
           ) : (
-            'Register production'
+            t('production.page.register')
           )
         }
-        description={
-          editing
-            ? 'Changes to the tag, weight, mineral or ID are added to the audit history.'
-            : 'Record a new production batch.'
-        }
+        description={editing ? t('production.page.editDescription') : t('production.page.newDescription')}
       />
       {/* key: remount with fresh defaults when a newer version is loaded */}
       <ProductionForm key={record.data?.version ?? 'new'} original={record.data} />

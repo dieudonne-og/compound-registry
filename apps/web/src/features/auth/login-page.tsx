@@ -47,7 +47,8 @@ export function Component() {
   if (user) return <Navigate to={next} replace />;
 
   const error = login.error instanceof ApiError ? login.error : null;
-  const errorText = error?.code === 'RATE_LIMITED' ? t('auth.tooManyAttempts') : error ? error.message : null;
+  const errorText =
+    error?.code === 'RATE_LIMITED' ? t('auth.tooManyAttempts') : error ? t(error.message) : null;
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">

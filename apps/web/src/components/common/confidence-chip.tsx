@@ -1,8 +1,10 @@
+import { useT } from '@/i18n/i18n';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function ConfidenceChip({ value }: { value: number }) {
   const pct = Math.round(value * 100);
+  const t = useT();
   const tone = value >= 0.85 ? 'high' : value >= 0.6 ? 'medium' : 'low';
   return (
     <Tooltip>
@@ -17,10 +19,10 @@ export function ConfidenceChip({ value }: { value: number }) {
           )}
         >
           <span className="size-1.5 rounded-full bg-current" aria-hidden />
-          {pct}%<span className="sr-only"> confidence</span>
+          {pct}%<span className="sr-only"> {t('common.confidence')}</span>
         </span>
       </TooltipTrigger>
-      <TooltipContent>Recognition confidence: {tone}</TooltipContent>
+      <TooltipContent>{t('common.confidenceTip', { level: t(`common.levels.${tone}`) })}</TooltipContent>
     </Tooltip>
   );
 }

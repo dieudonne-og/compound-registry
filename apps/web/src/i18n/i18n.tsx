@@ -33,14 +33,34 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 export const browserLanguage = (): Language =>
   typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en';
 
+const STORAGE_KEY = 'language';
+/** The last language chosen in this browser (also used before signing in); storage may be unavailable. */
+const storedLanguage = (): Language | null => {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    return v === 'en' || v === 'fr' ? v : null;
+  } catch {
+    return null;
+  }
+};
+
 export function I18nProvider({ initial, children }: { initial?: Language; children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(initial ?? browserLanguage());
+  const [language, setLanguageState] = useState<Language>(
+    () => initial ?? storedLanguage() ?? browserLanguage(),
+  );
   // Set synchronously too, so requests made during the first render already carry the language.
   setRequestLanguage(language);
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
-  const setLanguage = useCallback((next: Language) => setLanguageState(next), []);
+  const setLanguage = useCallback((next: Language) => {
+    setLanguageState(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      /* not remembered in this browser */
+    }
+  }, []);
   const value = useMemo<I18nContextValue>(
     () => ({
       language,

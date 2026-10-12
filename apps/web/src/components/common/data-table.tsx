@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/i18n';
 import type { ReactNode } from 'react';
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -34,6 +35,7 @@ export function DataTable<T>({
   onRowClick,
   getRowLabel,
 }: Props<T>) {
+  const t = useT();
   const table = useReactTable({
     data: data ?? [],
     columns,
@@ -119,11 +121,8 @@ export function DataTable<T>({
       </ul>
 
       <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
-        <p aria-live="polite">
-          <span className="num">
-            {from}–{to}
-          </span>{' '}
-          of <span className="num">{total}</span>
+        <p aria-live="polite" className="num">
+          {t('common.pagination.range', { from, to, total })}
         </p>
         <div className="flex items-center gap-1">
           <Button
@@ -132,7 +131,7 @@ export function DataTable<T>({
             className="size-8"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            aria-label="Previous page"
+            aria-label={t('common.pagination.previous')}
           >
             <ChevronLeft />
           </Button>
@@ -145,7 +144,7 @@ export function DataTable<T>({
             className="size-8"
             disabled={page >= pages}
             onClick={() => onPageChange(page + 1)}
-            aria-label="Next page"
+            aria-label={t('common.pagination.next')}
           >
             <ChevronRight />
           </Button>

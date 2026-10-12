@@ -1,3 +1,6 @@
+import { useEffect } from 'react';
+import { useMatches } from 'react-router';
+import { useT } from '@/i18n/i18n';
 import { Suspense, useState } from 'react';
 import { Outlet } from 'react-router';
 import { FlaskConical } from 'lucide-react';
@@ -19,6 +22,14 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const t = useT();
+  const crumb = useMatches()
+    .map((m) => (m.handle as { crumb?: string } | undefined)?.crumb)
+    .filter(Boolean)
+    .at(-1);
+  useEffect(() => {
+    document.title = crumb ? `${t(crumb)} · Compound Registry` : 'Compound Registry';
+  }, [crumb, t]);
 
   const toggle = () =>
     setCollapsed((c) => {
@@ -36,7 +47,7 @@ export function AppShell() {
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:shadow"
       >
-        Skip to content
+        {t('common.skipToContent')}
       </a>
       <Sidebar collapsed={collapsed} onToggle={toggle} />
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

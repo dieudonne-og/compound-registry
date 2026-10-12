@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useFormat, useT } from '@/i18n/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { FlaskConical, Search, Upload } from 'lucide-react';
 import type { CompoundSummary } from '@cr/contracts';
-import { formatDateTime } from '@/lib/format';
 import { useDebouncedValue } from '@/lib/use-debounced';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,46 +17,58 @@ import { ConfidenceChip } from '@/components/common/confidence-chip';
 import { useCan } from '@/features/auth/session';
 import { useCompounds } from './api';
 
-const METHOD = { 'text-layer': 'Text layer', ocr: 'OCR', hybrid: 'Mixed' } as const;
-
-const columns: ColumnDef<CompoundSummary, unknown>[] = [
-  {
-    header: 'Purchase ID',
-    cell: ({ row }) => <span className="num font-medium">{row.original.purchaseId}</span>,
-  },
-  {
-    header: 'Report',
-    cell: ({ row }) => <span className="block max-w-56 truncate">{row.original.fileName ?? '—'}</span>,
-  },
-  {
-    header: 'Method',
-    cell: ({ row }) =>
-      row.original.method ? <Badge variant="secondary">{METHOD[row.original.method]}</Badge> : '—',
-  },
-  {
-    header: 'Values',
-    meta: { className: 'text-right' },
-    cell: ({ row }) => <span className="num">{row.original.valuesCount}</span>,
-  },
-  {
-    header: 'Confidence',
-    cell: ({ row }) =>
-      row.original.overallConfidence === null ? (
-        '—'
-      ) : (
-        <ConfidenceChip value={row.original.overallConfidence} />
-      ),
-  },
-  {
-    header: 'Extracted',
-    cell: ({ row }) => (row.original.extractionDate ? formatDateTime(row.original.extractionDate) : '—'),
-  },
-];
+function useColumns(): ColumnDef<CompoundSummary, unknown>[] {
+  const t = useT();
+  const format = useFormat();
+  return useMemo(
+    () => [
+      {
+        header: t('compounds.list.columns.purchaseId'),
+        cell: ({ row }) => <span className="num font-medium">{row.original.purchaseId}</span>,
+      },
+      {
+        header: t('compounds.list.columns.report'),
+        cell: ({ row }) => <span className="block max-w-56 truncate">{row.original.fileName ?? '—'}</span>,
+      },
+      {
+        header: t('compounds.list.columns.method'),
+        cell: ({ row }) =>
+          row.original.method ? (
+            <Badge variant="secondary">{t(`compounds.method.${row.original.method}`)}</Badge>
+          ) : (
+            '—'
+          ),
+      },
+      {
+        header: t('compounds.list.columns.values'),
+        meta: { className: 'text-right' },
+        cell: ({ row }) => <span className="num">{row.original.valuesCount}</span>,
+      },
+      {
+        header: t('compounds.list.columns.confidence'),
+        cell: ({ row }) =>
+          row.original.overallConfidence === null ? (
+            '—'
+          ) : (
+            <ConfidenceChip value={row.original.overallConfidence} />
+          ),
+      },
+      {
+        header: t('compounds.list.columns.extracted'),
+        cell: ({ row }) => (row.original.extractionDate ? format.dateTime(row.original.extractionDate) : '—'),
+      },
+    ],
+    [t, format],
+  );
+}
 
 export function Component() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const can = useCan();
+  const t = useT();
+  const format = useFormat();
+  const columns = useColumns();
   const page = Number(params.get('page') ?? 1);
   const [search, setSearch] = useState(params.get('purchaseId') ?? '');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
@@ -98,13 +110,13 @@ export function Component() {
   return (
     <>
       <PageHeader
-        title="Compound analyses"
-        description="Verified laboratory results saved to the Compound table."
+        title={t('compounds.list.title')}
+        description={t('compounds.list.description')}
         actions={
           can('compound:extract') && (
             <Button asChild>
               <Link to="/compounds/upload">
-                <Upload /> Upload report
+                <Upload /> {t('compounds.list.upload')}
               </Link>
             </Button>
           )
@@ -117,20 +129,20 @@ export function Component() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by purchase ID"
+            placeholder={t('compounds.list.search')}
             className="pl-9"
-            aria-label="Search by purchase ID"
+            aria-label={t('compounds.list.search')}
           />
         </div>
         <DatePicker
           value={params.get('from') ?? undefined}
           onChange={(v) => set({ from: v })}
-          placeholder="From date"
+          placeholder={t('compounds.list.from')}
         />
         <DatePicker
           value={params.get('to') ?? undefined}
           onChange={(v) => set({ to: v })}
-          placeholder="To date"
+          placeholder={t('compounds.list.to')}
         />
       </div>
 
@@ -146,22 +158,18 @@ export function Component() {
           onPageChange={(p) => set({ page: String(p) })}
           isLoading={query.isLoading}
           onRowClick={(r) => navigate(`/compounds/${r.id}`)}
-          getRowLabel={(r) => `Open analysis for purchase ${r.purchaseId}`}
+          getRowLabel={(r) => t('compounds.list.rowLabel', { purchaseId: r.purchaseId })}
           empty={
             <EmptyState
               icon={FlaskConical}
-              title={filtered ? 'No analyses match these filters' : 'No analyses yet'}
-              description={
-                filtered
-                  ? 'Try a different purchase ID or date range.'
-                  : 'Upload a laboratory report to extract and save its compound values.'
-              }
+              title={filtered ? t('compounds.list.emptyFiltered') : t('compounds.list.empty')}
+              description={filtered ? t('compounds.list.emptyFilteredHelp') : t('compounds.list.emptyHelp')}
               action={
                 !filtered &&
                 can('compound:extract') && (
                   <Button asChild>
                     <Link to="/compounds/upload">
-                      <Upload /> Upload report
+                      <Upload /> {t('compounds.list.upload')}
                     </Link>
                   </Button>
                 )
@@ -179,8 +187,8 @@ export function Component() {
               </div>
               <p className="mt-1 truncate text-sm text-muted-foreground">{r.fileName}</p>
               <p className="mt-2 text-xs text-muted-foreground">
-                <span className="num">{r.valuesCount}</span> values ·{' '}
-                {r.extractionDate && formatDateTime(r.extractionDate)}
+                <span className="num">{t('compounds.list.valuesCount', { count: r.valuesCount })}</span> ·{' '}
+                {r.extractionDate && format.dateTime(r.extractionDate)}
               </p>
             </Link>
           )}

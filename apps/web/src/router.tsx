@@ -19,44 +19,44 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        handle: { crumb: 'Dashboard' },
+        handle: { crumb: 'crumbs.dashboard' },
         lazy: () => import('@/features/dashboard/dashboard-page'),
       },
       {
         path: 'compounds',
-        handle: { crumb: 'Compound analyses' },
+        handle: { crumb: 'crumbs.compounds' },
         children: [
           { index: true, lazy: () => import('@/features/compounds/compounds-page') },
           {
             path: 'upload',
-            handle: { crumb: 'Upload report' },
+            handle: { crumb: 'crumbs.upload' },
             lazy: () => import('@/features/compounds/upload-page'),
           },
           {
             path: ':id',
-            handle: { crumb: 'Analysis' },
+            handle: { crumb: 'crumbs.analysis' },
             lazy: () => import('@/features/compounds/compound-detail-page'),
           },
         ],
       },
       {
         path: 'production',
-        handle: { crumb: 'Production' },
+        handle: { crumb: 'crumbs.production' },
         children: [
           { index: true, lazy: () => import('@/features/production/production-list-page') },
           {
             path: 'new',
-            handle: { crumb: 'Register' },
+            handle: { crumb: 'crumbs.register' },
             lazy: () => import('@/features/production/production-form-page'),
           },
           {
             path: ':id',
-            handle: { crumb: 'Record' },
+            handle: { crumb: 'crumbs.record' },
             lazy: () => import('@/features/production/production-detail-page'),
           },
           {
             path: ':id/edit',
-            handle: { crumb: 'Edit' },
+            handle: { crumb: 'crumbs.edit' },
             lazy: () => import('@/features/production/production-form-page'),
           },
         ],

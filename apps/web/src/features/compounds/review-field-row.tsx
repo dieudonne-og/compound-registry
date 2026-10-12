@@ -8,15 +8,6 @@ import { ConfidenceChip } from '@/components/common/confidence-chip';
 import { cn } from '@/lib/utils';
 import { valueError } from './review-state';
 
-const FLAG_TEXT: Record<string, string> = {
-  low_confidence: 'Low recognition confidence — compare with the document.',
-  fuzzy_name: 'The compound name was matched approximately.',
-  conflict: 'The report shows two different values. Pick the correct one.',
-  out_of_range: 'Above 100 % — likely a misread digit.',
-  precision_truncated: 'Rounded to 4 decimal places to fit the database.',
-  missing_marker: 'Marked as not measured on the report; stored as empty.',
-};
-
 type Props = {
   field: ExtractedField;
   value: string;
@@ -51,7 +42,7 @@ export function ReviewFieldRow({ field, value, accepted, onChange, onAccept }: P
             inputMode="decimal"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Not reported"
+            placeholder={t('compounds.review.notReported')}
             aria-invalid={!!error}
             aria-describedby={`${id}-help`}
             className="num pr-8"
@@ -64,7 +55,7 @@ export function ReviewFieldRow({ field, value, accepted, onChange, onAccept }: P
           {error && <p className="text-destructive">{t(error)}</p>}
           {field.flags.map((f) => (
             <p key={f} className={cn(f === 'missing_marker' ? 'text-muted-foreground' : 'text-warning')}>
-              {FLAG_TEXT[f]}
+              {t(`compounds.review.flags.${f}`)}
             </p>
           ))}
           {field.candidates && (
@@ -85,7 +76,8 @@ export function ReviewFieldRow({ field, value, accepted, onChange, onAccept }: P
           )}
           {field.rawText && (
             <p className="num truncate text-muted-foreground" title={field.rawText}>
-              Source: “{field.rawText}”{field.uncertainty && ` · ±${field.uncertainty}`}
+              {t('compounds.review.source', { text: field.rawText })}
+              {field.uncertainty && ` · ±${field.uncertainty}`}
             </p>
           )}
         </div>
@@ -94,7 +86,8 @@ export function ReviewFieldRow({ field, value, accepted, onChange, onAccept }: P
         <ConfidenceChip value={field.confidence} />
         {flagged && (
           <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <Checkbox checked={accepted} onCheckedChange={(c) => onAccept(c === true)} /> Looks correct
+            <Checkbox checked={accepted} onCheckedChange={(c) => onAccept(c === true)} />{' '}
+            {t('compounds.review.looksCorrect')}
           </label>
         )}
       </div>

@@ -44,7 +44,9 @@ export type UnmappedValue = z.infer<typeof unmappedValue>;
 
 export const extractionWarning = z.object({
   code: z.enum(['TOTAL_EXCEEDS_100', 'DUPLICATE_FILE', 'LOW_OVERALL_CONFIDENCE']),
+  /** English text; screens translate from `code` and `params` (absent on warnings saved before they existed). */
   message: z.string(),
+  params: z.record(z.union([z.string(), z.number()])).optional(),
 });
 export type ExtractionWarning = z.infer<typeof extractionWarning>;
 

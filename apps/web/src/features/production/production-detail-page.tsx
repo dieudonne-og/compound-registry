@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router';
 import { Pencil } from 'lucide-react';
-import { formatDate, formatDateTime, formatKg } from '@/lib/format';
+import { useFormat, useT } from '@/i18n/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,8 @@ import { VerifyPanel } from './verify-panel';
 export function Component() {
   const id = Number(useParams().id);
   const can = useCan();
+  const t = useT();
+  const format = useFormat();
   const record = useProduction(id);
   const history = useHistory(id, can('audit:read'));
 
@@ -28,11 +30,13 @@ export function Component() {
       </div>
     );
 
+  const by = (when: string, name: string) =>
+    t('production.detail.byWhen', { when: format.dateTime(when), name });
   const details: [string, React.ReactNode][] = [
-    ['Tag number', <span className="num">{r.tagNumber}</span>],
-    ['Production date', formatDate(r.productionDate)],
+    [t('production.fields.tagNumber'), <span className="num">{r.tagNumber}</span>],
+    [t('production.detail.productionDate'), format.date(r.productionDate)],
     [
-      'Mineral type',
+      t('production.fields.mineralTypeId'),
       <>
         {r.mineralType.name}{' '}
         <Badge variant="secondary" className="num ml-1">
@@ -40,25 +44,25 @@ export function Component() {
         </Badge>
       </>,
     ],
-    ['Production weight', <span className="num">{formatKg(r.weightKg)}</span>],
-    ['Company', r.company.name],
-    ['Business location', r.businessLocation.name],
-    ['Traceability agent', r.traceabilityAgent.name],
-    ['Operator representative', r.operatorRepresentative],
-    ['Registered', `${formatDateTime(r.createdAt)} by ${r.createdBy.name}`],
-    ['Last updated', r.updatedBy ? `${formatDateTime(r.updatedAt)} by ${r.updatedBy.name}` : '—'],
+    [t('production.fields.weightKg'), <span className="num">{format.kg(r.weightKg)}</span>],
+    [t('production.detail.company'), r.company.name],
+    [t('production.detail.location'), r.businessLocation.name],
+    [t('production.detail.agent'), r.traceabilityAgent.name],
+    [t('production.detail.representative'), r.operatorRepresentative],
+    [t('production.detail.registered'), by(r.createdAt, r.createdBy.name)],
+    [t('production.detail.lastUpdated'), r.updatedBy ? by(r.updatedAt, r.updatedBy.name) : '—'],
   ];
 
   return (
     <>
       <PageHeader
         title={<span className="num">{r.productionCode}</span>}
-        description={`Version ${r.version}`}
+        description={t('production.detail.version', { version: r.version })}
         actions={
           can('production:update', { createdBy: r.createdBy.id }) && (
             <Button asChild>
               <Link to={`/production/${r.id}/edit`}>
-                <Pencil /> Edit
+                <Pencil /> {t('production.detail.edit')}
               </Link>
             </Button>
           )
@@ -69,7 +73,7 @@ export function Component() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Details</CardTitle>
+              <CardTitle className="text-base">{t('production.detail.details')}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
@@ -84,17 +88,12 @@ export function Component() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Change history</CardTitle>
-              <CardDescription>
-                Each entry is linked to the previous one by a keyed hash, so edits or deletions are
-                detectable.
-              </CardDescription>
+              <CardTitle className="text-base">{t('production.detail.history')}</CardTitle>
+              <CardDescription>{t('production.detail.historyHelp')}</CardDescription>
             </CardHeader>
             <CardContent>
               {!can('audit:read') ? (
-                <p className="text-sm text-muted-foreground">
-                  The history is available to supervisors, administrators and auditors.
-                </p>
+                <p className="text-sm text-muted-foreground">{t('production.detail.historyRestricted')}</p>
               ) : history.error ? (
                 <ErrorState error={history.error} onRetry={() => history.refetch()} />
               ) : history.data ? (
@@ -109,7 +108,7 @@ export function Component() {
           <aside className="lg:sticky lg:top-20 lg:self-start">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Integrity</CardTitle>
+                <CardTitle className="text-base">{t('production.detail.integrity')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <VerifyPanel id={r.id} />

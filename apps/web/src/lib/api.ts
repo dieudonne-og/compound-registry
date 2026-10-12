@@ -30,14 +30,13 @@ export function toApiError(status: number, body: unknown): ApiError {
   return new ApiError(
     status,
     e?.code ?? 'INTERNAL_ERROR',
-    e?.message ?? 'Something went wrong. Please try again.',
+    e?.message ?? 'common.unknownError', // a message key; screens show messages through t()
     e?.details,
     e?.requestId,
   );
 }
 
-const networkError = () =>
-  new ApiError(0, 'NETWORK_ERROR', 'Cannot reach the server. Check your connection and try again.');
+const networkError = () => new ApiError(0, 'NETWORK_ERROR', 'common.networkError');
 const NO_REFRESH = ['/auth/login', '/auth/refresh', '/auth/logout'];
 
 let requestLanguage = 'en';

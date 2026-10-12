@@ -9,12 +9,14 @@ describe('validateReportFile', () => {
       expect(validateReportFile(file(n, 10), 10)).toBeNull();
   });
   it('explains unsupported types', () => {
-    expect(validateReportFile(file('a.docx', 10), 10)).toMatch(/PDF, JPG, JPEG or PNG/);
+    expect(validateReportFile(file('a.docx', 10), 10)).toEqual({ key: 'upload.file.type' });
   });
   it('explains oversize files with the actual size', () => {
-    expect(validateReportFile(file('a.pdf', 11 * 1024 * 1024), 10)).toBe(
-      'This file is 11.0 MB. The maximum is 10 MB.',
-    );
+    expect(validateReportFile(file('a.pdf', 11 * 1024 * 1024), 10)).toEqual({
+      key: 'upload.file.size',
+      params: { size: 11, max: 10 },
+    });
   });
-  it('rejects empty files', () => expect(validateReportFile(file('a.pdf', 0), 10)).toMatch(/empty/));
+  it('rejects empty files', () =>
+    expect(validateReportFile(file('a.pdf', 0), 10)).toEqual({ key: 'upload.file.empty' }));
 });

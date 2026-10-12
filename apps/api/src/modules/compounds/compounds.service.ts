@@ -107,6 +107,7 @@ export function createCompoundService({
         warnings.push({
           code: 'DUPLICATE_FILE',
           message: `This file was already uploaded for purchase ${duplicateOf.purchaseId} on ${duplicateOf.createdAt.slice(0, 10)}.`,
+          params: { purchaseId: duplicateOf.purchaseId, date: duplicateOf.createdAt.slice(0, 10) },
         });
       }
 

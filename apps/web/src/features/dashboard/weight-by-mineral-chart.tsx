@@ -9,12 +9,14 @@ import {
   YAxis,
 } from 'recharts';
 import type { DashboardSummary } from '@cr/contracts';
+import { useI18n } from '@/i18n/i18n';
 
-const kg = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 });
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function WeightByMineralChart({ data }: { data: DashboardSummary['weightByMineral'] }) {
+  const { t, locale } = useI18n();
+  const kg = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
   const rows = data.map((d) => ({ name: d.name, kg: Number(d.weightKg) }));
   return (
     <figure>
@@ -33,7 +35,7 @@ export function WeightByMineralChart({ data }: { data: DashboardSummary['weightB
             />
             <Tooltip
               cursor={{ fill: 'var(--muted)' }}
-              formatter={(v) => [`${kg.format(Number(v))} kg`, 'Weight']}
+              formatter={(v) => [`${kg.format(Number(v))} kg`, t('dashboard.chart.weight')]}
               contentStyle={{
                 background: 'var(--popover)',
                 border: '1px solid var(--border)',
@@ -60,11 +62,11 @@ export function WeightByMineralChart({ data }: { data: DashboardSummary['weightB
         </ResponsiveContainer>
       </div>
       <table className="sr-only">
-        <caption>Total production weight by mineral type</caption>
+        <caption>{t('dashboard.chart.caption')}</caption>
         <thead>
           <tr>
-            <th>Mineral</th>
-            <th>Weight (kg)</th>
+            <th>{t('dashboard.chart.mineral')}</th>
+            <th>{t('dashboard.chart.weightKg')}</th>
           </tr>
         </thead>
         <tbody>

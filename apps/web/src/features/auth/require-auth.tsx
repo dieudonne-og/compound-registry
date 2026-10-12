@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/i18n';
 import { useEffect, type ReactNode } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,16 +11,17 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const client = useQueryClient();
+  const t = useT();
 
   useEffect(() => {
     const onExpired = () => {
       client.setQueryData(sessionKey, null);
-      toast.info('Your session ended. Please sign in again.');
+      toast.info(t('common.sessionEnded'));
       navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
     };
     window.addEventListener('session-expired', onExpired);
     return () => window.removeEventListener('session-expired', onExpired);
-  }, [client, navigate, location]);
+  }, [client, navigate, location, t]);
 
   if (isLoading) return <PageLoader fullScreen />;
   if (!user)

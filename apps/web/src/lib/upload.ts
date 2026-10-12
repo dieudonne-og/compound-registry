@@ -25,10 +25,7 @@ export function uploadWithProgress<T>(
       if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response as T);
       else reject(toApiError(xhr.status, xhr.response));
     };
-    xhr.onerror = () =>
-      reject(
-        new ApiError(0, 'NETWORK_ERROR', 'The upload was interrupted. Check your connection and try again.'),
-      );
+    xhr.onerror = () => reject(new ApiError(0, 'NETWORK_ERROR', 'common.uploadInterrupted'));
     xhr.onabort = () => reject(new DOMException('Upload cancelled', 'AbortError'));
     signal?.addEventListener('abort', () => xhr.abort(), { once: true });
     xhr.send(form);

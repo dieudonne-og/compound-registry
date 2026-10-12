@@ -9,7 +9,9 @@ export async function signIn(page: Page, role: 'admin' | 'supervisor' | 'operato
   await page.getByLabel('Email').fill(`${role}@example.com`);
   await page.getByLabel('Password', { exact: true }).fill('Demo!2026');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(/Good (morning|afternoon|evening)/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    /Good (morning|afternoon|evening)|Bonjour|Bonsoir/,
+  );
 }
 
 export const db = () =>

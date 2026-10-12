@@ -1,9 +1,11 @@
 import { ArrowRight, Pencil, PlusCircle } from 'lucide-react';
 import type { AuditEventView } from '@cr/contracts';
-import { formatDateTime, shortHash } from '@/lib/format';
-import { CRITICAL_LABELS } from './form-logic';
+import { shortHash } from '@/lib/format';
+import { useFormat, useT } from '@/i18n/i18n';
 
 export function AuditTimeline({ events }: { events: AuditEventView[] }) {
+  const t = useT();
+  const format = useFormat();
   return (
     <ol className="relative space-y-6 before:absolute before:inset-y-2 before:left-[15px] before:w-px before:bg-border">
       {[...events].reverse().map((e) => {
@@ -17,11 +19,13 @@ export function AuditTimeline({ events }: { events: AuditEventView[] }) {
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <p className="font-medium">
                   {e.eventType === 'CREATE'
-                    ? 'Registered'
-                    : `Changed ${e.changes.map((c) => CRITICAL_LABELS[c.field].toLowerCase()).join(', ')}`}
+                    ? t('production.timeline.registered')
+                    : t('production.timeline.changed', {
+                        fields: e.changes.map((c) => t(`production.fieldsInline.${c.field}`)).join(', '),
+                      })}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {e.actor.label} · <time dateTime={e.occurredAt}>{formatDateTime(e.occurredAt)}</time>
+                  {e.actor.label} · <time dateTime={e.occurredAt}>{format.dateTime(e.occurredAt)}</time>
                 </p>
               </div>
               {e.reason && (
@@ -32,11 +36,14 @@ export function AuditTimeline({ events }: { events: AuditEventView[] }) {
               <ul className="space-y-1 text-sm">
                 {e.changes.map((c) => (
                   <li key={c.field} className="flex flex-wrap items-center gap-2">
-                    <span className="w-36 text-muted-foreground">{CRITICAL_LABELS[c.field]}</span>
+                    <span className="w-36 text-muted-foreground">{t(`production.fields.${c.field}`)}</span>
                     {c.fromLabel !== null && (
                       <>
                         <span className="num text-muted-foreground line-through">{c.fromLabel}</span>
-                        <ArrowRight className="size-3.5 text-muted-foreground" aria-label="changed to" />
+                        <ArrowRight
+                          className="size-3.5 text-muted-foreground"
+                          aria-label={t('production.timeline.changedTo')}
+                        />
                       </>
                     )}
                     <span className="num font-medium">{c.toLabel}</span>
@@ -45,7 +52,7 @@ export function AuditTimeline({ events }: { events: AuditEventView[] }) {
               </ul>
               <p
                 className="num text-xs text-muted-foreground"
-                title={`hash ${e.hash}\nprevious ${e.prevHash}`}
+                title={t('production.timeline.hashTitle', { hash: e.hash, prev: e.prevHash })}
               >
                 #{e.seq} · {shortHash(e.hash)} ← {shortHash(e.prevHash)}
               </p>

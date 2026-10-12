@@ -1,3 +1,5 @@
+import { useFormat, useT } from '@/i18n/i18n';
+import { warningText } from './warnings';
 import { useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, FileSearch, Info, Loader2, Plus } from 'lucide-react';
 import {
@@ -27,8 +29,6 @@ import {
   type ReviewState,
 } from './review-state';
 
-const METHOD_LABEL = { 'text-layer': 'Text layer', ocr: 'Text recognition', hybrid: 'Mixed' } as const;
-
 type Props = {
   file: File;
   result: ExtractionResult;
@@ -42,6 +42,8 @@ type Props = {
 };
 
 export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props) {
+  const t = useT();
+  const format = useFormat();
   const [state, setState] = useState<ReviewState>(() => initialReviewState(result));
   const [added, setAdded] = useState<ExtractedField[]>([]);
   const [showRaw, setShowRaw] = useState(false);
@@ -103,15 +105,15 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
         <Card>
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{METHOD_LABEL[result.method]}</Badge>
+              <Badge variant="secondary">{t(`compounds.method.${result.method}`)}</Badge>
               <Badge variant="outline" className="num">
-                {result.pages} page{result.pages > 1 ? 's' : ''}
+                {t('compounds.review.pages', { count: result.pages })}
               </Badge>
               <ConfidenceChip value={result.overallConfidence} />
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="ml-auto lg:hidden">
-                    <FileSearch /> View document
+                    <FileSearch /> {t('compounds.review.viewDocument')}
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[90dvh]">
@@ -125,7 +127,7 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
               </Sheet>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="review-purchase">Purchase ID</Label>
+              <Label htmlFor="review-purchase">{t('compounds.review.purchaseId')}</Label>
               <Input
                 id="review-purchase"
                 value={state.purchaseId}
@@ -137,7 +139,7 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
                 aria-invalid={!!purchaseError}
                 className="num max-w-xs"
               />
-              {purchaseError && <p className="text-sm text-destructive">{purchaseError}</p>}
+              {purchaseError && <p className="text-sm text-destructive">{t(purchaseError)}</p>}
             </div>
           </CardHeader>
         </Card>
@@ -145,8 +147,14 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
         {result.warnings.map((w) => (
           <Alert key={w.code} className="border-warning-border bg-warning-surface text-warning">
             <AlertTriangle />
-            <AlertTitle>{w.code === 'DUPLICATE_FILE' ? 'Already uploaded' : 'Check the values'}</AlertTitle>
-            <AlertDescription className="text-foreground/80">{w.message}</AlertDescription>
+            <AlertTitle>
+              {w.code === 'DUPLICATE_FILE'
+                ? t('compounds.warnings.duplicateTitle')
+                : t('compounds.warnings.checkTitle')}
+            </AlertTitle>
+            <AlertDescription className="text-foreground/80">
+              {warningText(w, t, format.date)}
+            </AlertDescription>
           </Alert>
         ))}
 
@@ -154,14 +162,12 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
           <Card className="border-warning-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <AlertTriangle className="size-4 text-warning" /> Needs review{' '}
+                <AlertTriangle className="size-4 text-warning" /> {t('compounds.review.needsReview')}{' '}
                 <Badge variant="secondary" className="num">
                   {flagged.length}
                 </Badge>
               </CardTitle>
-              <CardDescription>
-                Correct each value or tick “Looks correct” after checking it against the document.
-              </CardDescription>
+              <CardDescription>{t('compounds.review.needsReviewHelp')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">{flagged.map(row)}</CardContent>
           </Card>
@@ -170,24 +176,24 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Extracted values{' '}
+              {t('compounds.review.extracted')}{' '}
               <Badge variant="secondary" className="num ml-1">
                 {clean.length}
               </Badge>
             </CardTitle>
-            <CardDescription>Columns not listed are saved as empty, never as zero.</CardDescription>
+            <CardDescription>{t('compounds.review.extractedHelp')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-0">
             {clean.length ? (
               clean.map(row)
             ) : (
-              <p className="text-sm text-muted-foreground">No other values were recognised.</p>
+              <p className="text-sm text-muted-foreground">{t('compounds.review.noOther')}</p>
             )}
             <div className="flex items-center gap-2 pt-2">
               <Select value="" onValueChange={(c) => addColumn(c as CompoundColumn)}>
-                <SelectTrigger className="w-full sm:w-72" aria-label="Add a value the scan missed">
+                <SelectTrigger className="w-full sm:w-72" aria-label={t('compounds.review.addMissed')}>
                   <Plus className="size-4" />
-                  <SelectValue placeholder="Add a value the scan missed" />
+                  <SelectValue placeholder={t('compounds.review.addMissed')} />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   {available.map((d) => (
@@ -205,11 +211,9 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Info className="size-4 text-muted-foreground" /> Found but not saved
+                <Info className="size-4 text-muted-foreground" /> {t('compounds.review.unmapped')}
               </CardTitle>
-              <CardDescription>
-                These values appear on the report but have no automatic column in the Compound table.
-              </CardDescription>
+              <CardDescription>{t('compounds.review.unmappedHelp')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="divide-y text-sm">
@@ -220,7 +224,7 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
                       <span className="num w-20 font-medium">{u.label}</span>
                       <span className="num">{u.value ?? '—'} %</span>
                       <span className="text-muted-foreground">
-                        {u.reason === 'no_column' ? 'No matching column' : 'Needs manual confirmation'}
+                        {t(`compounds.review.reason.${u.reason}`)}
                       </span>
                       {manual && !(manual.column in state.values) && (
                         <Button
@@ -229,7 +233,7 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
                           className="ml-auto h-7"
                           onClick={() => addColumn(manual.column, u.value ?? '')}
                         >
-                          Use value
+                          {t('compounds.review.useValue')}
                         </Button>
                       )}
                     </li>
@@ -242,8 +246,8 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
 
         <div>
           <Button variant="ghost" size="sm" onClick={() => setShowRaw((s) => !s)} aria-expanded={showRaw}>
-            <ChevronDown className={showRaw ? 'rotate-180' : ''} /> {showRaw ? 'Hide' : 'Show'} recognised
-            text
+            <ChevronDown className={showRaw ? 'rotate-180' : ''} />{' '}
+            {showRaw ? t('compounds.review.hideText') : t('compounds.review.showText')}
           </Button>
           {showRaw && (
             <pre className="num mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border bg-muted p-4 text-xs">
@@ -258,23 +262,21 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
           <p className="text-sm" aria-live="polite">
             {gate.pending.length > 0 ? (
               <span className="text-warning">
-                {gate.pending.length === 1
-                  ? '1 value still needs review'
-                  : `${gate.pending.length} values still need review`}
+                {t('compounds.review.pending', { count: gate.pending.length })}
               </span>
             ) : gate.invalid.length > 0 ? (
               <span className="text-destructive">
-                Fix {gate.invalid.length} invalid value{gate.invalid.length > 1 ? 's' : ''}
+                {t('compounds.review.invalid', { count: gate.invalid.length })}
               </span>
             ) : (
               <span className="text-muted-foreground">
-                Ready to save <span className="num">{filledCount}</span> values
+                {t('compounds.review.ready', { count: filledCount })}
               </span>
             )}
           </p>
           <div className="flex gap-2 sm:ml-auto">
             <Button variant="outline" onClick={onCancel} disabled={saving}>
-              Start over
+              {t('compounds.review.startOver')}
             </Button>
             <Button
               disabled={!gate.canConfirm || !!purchaseError || saving}
@@ -286,7 +288,7 @@ export function ReviewPanel({ file, result, saving, onCancel, onConfirm }: Props
                 })
               }
             >
-              {saving && <Loader2 className="animate-spin" />} Confirm and save
+              {saving && <Loader2 className="animate-spin" />} {t('compounds.review.confirm')}
             </Button>
           </div>
         </div>
