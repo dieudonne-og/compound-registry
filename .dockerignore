@@ -1,6 +1,9 @@
 **/node_modules
 **/dist
-**/storage*
+apps/api/storage
+apps/api/storage-*
+storage
+storage-*
 .git
 playwright-report
 test-results
