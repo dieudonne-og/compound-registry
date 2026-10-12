@@ -216,8 +216,15 @@ export function createProductionService({ db, config }: { db: Database; config: 
       return { items: rows.map(toRecord), total: total?.n ?? 0, page: query.page, pageSize };
     },
 
-    async exportCsv(query: ProductionListQuery): Promise<string> {
-      const { items } = await this.list({ ...query, page: 1 }, { limit: 10_000 });
+    /** All matching records, read in batches so large exports never stop at an arbitrary row count. */
+    async exportCsv(query: ProductionListQuery, opts: { batchSize?: number } = {}): Promise<string> {
+      const batchSize = opts.batchSize ?? 1000;
+      const items: ProductionRecord[] = [];
+      for (let page = 1; ; page++) {
+        const batch = await this.list({ ...query, page }, { limit: batchSize });
+        items.push(...batch.items);
+        if (batch.items.length < batchSize) break;
+      }
       return toCsv([
         [
           'Production ID',

@@ -2,7 +2,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { randomUUID } from 'node:crypto';
 import type { RowDataPacket } from 'mysql2';
 import type { ProductionRecord } from '@cr/contracts';
-import { createTestApp, login, request, type Session, type TestApp } from '../helpers';
+import { createTestApp, login, request, testConfig, type Session, type TestApp } from '../helpers';
+import { createProductionService } from '../../src/modules/production/production.service';
 
 let t: TestApp;
 let admin: Session, supervisor: Session, operator: Session, auditor: Session;
@@ -299,6 +300,13 @@ describe('listing and export', () => {
       url: `/api/production?q=${tag.toLowerCase()}&pageSize=5&sort=-weightKg`,
     });
     expect(res.json()).toMatchObject({ total: 1, page: 1, pageSize: 5, items: [{ tagNumber: tag }] });
+  });
+
+  it('exports every matching record, not just the first batch', async () => {
+    const service = createProductionService({ db: t.db, config: testConfig() });
+    const all = await service.list({ page: 1, pageSize: 100, sort: '-createdAt' });
+    const csv = await service.exportCsv({ page: 1, pageSize: 20, sort: '-createdAt' }, { batchSize: 3 });
+    expect(csv.trim().split('\r\n')).toHaveLength(all.total + 1);
   });
 
   it('exports CSV with formula injection neutralised', async () => {
