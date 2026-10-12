@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import type { SessionUser } from '@cr/contracts';
-import type { Database } from '../../db/client';
+import type { Database, Tx } from '../../db/client';
 import { refreshTokens, users } from '../../db/schema';
 import { AppError } from '../../shared/errors';
 import { hashPassword, verifyPassword } from './password';
@@ -20,7 +20,7 @@ const toSession = (u: typeof users.$inferSelect): SessionUser => ({
 });
 
 /** Ends every session of a user (except, optionally, the one holding `keepTokenHash`). */
-export async function revokeAllTokens(db: Database, userId: number, keepTokenHash?: string) {
+export async function revokeAllTokens(db: Database | Tx, userId: number, keepTokenHash?: string) {
   const mine = and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt));
   await db
     .update(refreshTokens)

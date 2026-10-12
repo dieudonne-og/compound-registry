@@ -5,6 +5,7 @@ export const sharedFr: Shape<typeof sharedEn> = {
   validation: {
     required: 'Ce champ est obligatoire',
     email: 'Saisissez une adresse e-mail valide',
+    name: 'Saisissez un nom d’au moins 2 caractères',
     passwordRequired: 'Saisissez votre mot de passe',
     passwordMin: 'Utilisez au moins 12 caractères',
     purchaseId: {

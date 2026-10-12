@@ -3,6 +3,7 @@ export const sharedEn = {
   validation: {
     required: 'This field is required',
     email: 'Enter a valid email address',
+    name: 'Enter a name of at least 2 characters',
     passwordRequired: 'Enter your password',
     passwordMin: 'Use at least 12 characters',
     purchaseId: {

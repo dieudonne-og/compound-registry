@@ -10,3 +10,4 @@ export * from './reference';
 export * from './dashboard';
 export * from './i18n';
 export * from './preferences';
+export * from './admin';
