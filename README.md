@@ -26,12 +26,12 @@ Open <http://localhost:8080>. The API documentation is at <http://localhost:8080
 
 Demo accounts (password `Demo!2026`):
 
-| Email                    | Role          | Can                                                                          |
-| ------------------------ | ------------- | ---------------------------------------------------------------------------- |
-| `admin@example.com`      | Administrator | Everything, including changing a production ID and managing reference data   |
-| `supervisor@example.com` | Supervisor    | Upload reports, register and correct production, view and verify history     |
-| `operator@example.com`   | Operator      | Upload reports, register production, edit non-critical fields of own records |
-| `auditor@example.com`    | Auditor       | Read everything, download reports, view and verify history                   |
+| Email                    | Role          | Can                                                                                        |
+| ------------------------ | ------------- | ------------------------------------------------------------------------------------------ |
+| `admin@example.com`      | Administrator | Everything, including changing a production ID and managing reference data through the API |
+| `supervisor@example.com` | Supervisor    | Upload reports, register and correct production, view and verify history                   |
+| `operator@example.com`   | Operator      | Upload reports, register production, edit non-critical fields of own records               |
+| `auditor@example.com`    | Auditor       | Read everything, download reports, view and verify history                                 |
 
 To run without Docker, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-development).
 

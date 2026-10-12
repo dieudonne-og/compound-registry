@@ -86,13 +86,13 @@ Principles:
 | ------------------- | ---------------------------------------------------------------------------------------------- |
 | Database            | MySQL 8 (InnoDB, utf8mb4)                                                                      |
 | API                 | Node 22, Fastify, Drizzle ORM, zod, pino                                                       |
-| PDF text            | pdfjs-dist                                                                                     |
+| PDF text            | poppler `pdftotext` / `pdfinfo`                                                                |
 | PDF rasterization   | pdftoppm (poppler-utils)                                                                       |
 | OCR                 | Tesseract 5 (`eng`, `fra`)                                                                     |
 | Image preprocessing | sharp                                                                                          |
 | File type detection | file-type                                                                                      |
 | Password hashing    | argon2                                                                                         |
-| Web                 | React 18, Vite, Tailwind, shadcn/ui, TanStack Query, TanStack Table, react-hook-form, Recharts |
+| Web                 | React 19, Vite, Tailwind, shadcn/ui, TanStack Query, TanStack Table, react-hook-form, Recharts |
 | Tests               | Vitest, Supertest-style `fastify.inject`, Playwright                                           |
 | Delivery            | Docker Compose, GitHub Actions CI                                                              |
 
