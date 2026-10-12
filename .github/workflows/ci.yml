@@ -38,3 +38,36 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report }
+
+  containers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure secrets
+        run: |
+          cp .env.example .env
+          sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/; s/^AUDIT_SECRET=.*/AUDIT_SECRET=$(openssl rand -hex 32)/" .env
+      - run: docker compose up --build -d
+      - name: Wait for the stack
+        run: |
+          for i in $(seq 1 90); do curl -fsS http://localhost:8080/api/health && exit 0; sleep 2; done
+          exit 1
+      - name: Web app is served
+        run: curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
+      - name: Sign in through nginx and use the session
+        run: |
+          curl -fsS -c jar -H 'content-type: application/json' \
+            -d '{"email":"operator@example.com","password":"Demo!2026"}' http://localhost:8080/api/auth/login
+          curl -fsS -b jar http://localhost:8080/api/auth/me | grep -q '"role":"operator"'
+      - name: Extract a text PDF and a scanned PDF inside the container
+        run: |
+          CSRF=$(awk '/csrf_token/ {print $7}' jar)
+          curl -fsS -b jar -H "x-csrf-token: $CSRF" -F purchaseId=PO-CI-1 \
+            -F file=@apps/api/test/fixtures/reports/analysis-certificate-text.pdf \
+            http://localhost:8080/api/compounds/extract | grep -q '"value":"58.7200"'
+          curl -fsS -b jar -H "x-csrf-token: $CSRF" -F purchaseId=PO-CI-2 \
+            -F file=@apps/api/test/fixtures/reports/analysis-report-image-only.pdf \
+            http://localhost:8080/api/compounds/extract | grep -q '"value":"57.5700"'
+      - name: Container logs
+        if: failure()
+        run: docker compose logs --no-color
