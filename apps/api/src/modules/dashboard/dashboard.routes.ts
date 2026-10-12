@@ -1,6 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { and, count, desc, eq, gte, sql, sum } from 'drizzle-orm';
-import { dashboardSummary, type FieldChange } from '@cr/contracts';
+import { can, dashboardSummary, type FieldChange } from '@cr/contracts';
 import {
   compound,
   compoundExtraction,
@@ -20,7 +20,8 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (app) => {
       preHandler: app.authorize('production:read'),
       schema: { tags: ['dashboard'], response: { 200: dashboardSummary } },
     },
-    async () => {
+    async (request) => {
+      const showChainHealth = can(request.user, 'audit:verify');
       const db = app.db;
       const monthStart = `${todayIn(app.config.APP_TIMEZONE).slice(0, 7)}-01`;
       const thisMonth = gte(production.productionDate, monthStart);
@@ -49,7 +50,7 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (app) => {
           .innerJoin(production, eq(production.id, productionAuditEvent.productionId))
           .orderBy(desc(productionAuditEvent.occurredAt), desc(productionAuditEvent.id))
           .limit(8),
-        productionService.verifyAll(),
+        showChainHealth ? productionService.verifyAll() : Promise.resolve(null),
       ]);
 
       return {
@@ -66,7 +67,7 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (app) => {
           actorLabel: e.actorLabel,
           occurredAt: e.occurredAt.toISOString(),
         })),
-        chainHealth: { ...health, checkedAt: new Date().toISOString() },
+        chainHealth: health ? { ...health, checkedAt: new Date().toISOString() } : null,
       };
     },
   );

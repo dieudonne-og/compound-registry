@@ -112,30 +112,32 @@ export function Component() {
               </CardContent>
             </Card>
             <div className="space-y-6">
-              <Card className={data.chainHealth.tampered ? 'border-destructive/40' : undefined}>
-                <CardHeader className="flex-row items-center gap-3 space-y-0">
-                  {data.chainHealth.tampered ? (
-                    <ShieldAlert className="size-5 text-destructive" />
-                  ) : (
-                    <ShieldCheck className="size-5 text-success" />
-                  )}
-                  <div>
-                    <CardTitle className="text-base">Audit trail</CardTitle>
-                    <CardDescription>
-                      {data.chainHealth.tampered ? (
-                        <span className="text-destructive">
-                          <span className="num">{data.chainHealth.tampered}</span> record(s) failed
-                          verification
-                        </span>
-                      ) : (
-                        <>
-                          All <span className="num">{data.chainHealth.intact}</span> records verified
-                        </>
-                      )}
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-              </Card>
+              {data.chainHealth && (
+                <Card className={data.chainHealth.tampered ? 'border-destructive/40' : undefined}>
+                  <CardHeader className="flex-row items-center gap-3 space-y-0">
+                    {data.chainHealth.tampered ? (
+                      <ShieldAlert className="size-5 text-destructive" />
+                    ) : (
+                      <ShieldCheck className="size-5 text-success" />
+                    )}
+                    <div>
+                      <CardTitle className="text-base">Audit trail</CardTitle>
+                      <CardDescription>
+                        {data.chainHealth.tampered ? (
+                          <span className="text-destructive">
+                            <span className="num">{data.chainHealth.tampered}</span> record(s) failed
+                            verification
+                          </span>
+                        ) : (
+                          <>
+                            All <span className="num">{data.chainHealth.intact}</span> records verified
+                          </>
+                        )}
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Recent activity</CardTitle>

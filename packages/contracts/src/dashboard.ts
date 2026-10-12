@@ -16,6 +16,9 @@ export const dashboardSummary = z.object({
       occurredAt: z.string(),
     }),
   ),
-  chainHealth: z.object({ intact: z.number().int(), tampered: z.number().int(), checkedAt: z.string() }),
+  /** Null for roles without audit:verify. */
+  chainHealth: z
+    .object({ intact: z.number().int(), tampered: z.number().int(), checkedAt: z.string() })
+    .nullable(),
 });
 export type DashboardSummary = z.infer<typeof dashboardSummary>;

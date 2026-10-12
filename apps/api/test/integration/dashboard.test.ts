@@ -18,6 +18,12 @@ describe('dashboard and docs', () => {
     expect(dashboardSummary.safeParse(res.json()).success).toBe(true);
   });
 
+  it('shows audit-chain health only to roles that may verify it', async () => {
+    const operator = await login(t.app, 'operator');
+    const res = await request(t.app, operator, { method: 'GET', url: '/api/dashboard/summary' });
+    expect(res.json().chainHealth).toBeNull();
+  });
+
   it('publishes an OpenAPI document covering every endpoint', async () => {
     const doc = (await t.app.inject({ method: 'GET', url: '/docs/json' })).json();
     for (const path of [
