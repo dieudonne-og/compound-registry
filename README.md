@@ -110,6 +110,7 @@ Integration and end-to-end tests need a running MySQL and Tesseract; see the [de
 
 ## Documentation
 
+- [Requirements coverage](docs/REQUIREMENTS.md) — every requirement of the brief, where it is implemented and how it is tested
 - [API reference](docs/API.md) — conventions, error codes and examples; interactive version at `/docs`
 - [Deployment guide](docs/DEPLOYMENT.md) — configuration, environment variables, production checklist
 - [System design](docs/design/2026-10-11-system-design.md) — requirements analysis, data model and decisions
