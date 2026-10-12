@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useT } from '@/i18n/i18n';
 import { LanguageSwitch } from '@/components/layout/language-switch';
-import { sessionKey, useSession } from './session';
+import { fetchSession, sessionKey, useSession } from './session';
 
 const DEMO = ['admin', 'supervisor', 'operator', 'auditor'];
 const FEATURES = [
@@ -38,8 +38,9 @@ export function Component() {
   const login = useMutation({
     mutationFn: (values: LoginInput) =>
       api<{ user: SessionUser }>('/auth/login', { method: 'POST', json: values }),
-    onSuccess: ({ user }) => {
-      client.setQueryData(sessionKey, user);
+    onSuccess: async () => {
+      // Load the whole session (preferences, forced password change) before leaving the sign-in page.
+      await client.fetchQuery({ queryKey: sessionKey, queryFn: fetchSession, staleTime: 0 });
       navigate(next, { replace: true });
     },
   });

@@ -1,3 +1,4 @@
+import { usePreferences } from '@/features/auth/session';
 import { useT } from '@/i18n/i18n';
 import type { ReactNode } from 'react';
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table';
@@ -36,6 +37,7 @@ export function DataTable<T>({
   getRowLabel,
 }: Props<T>) {
   const t = useT();
+  const compact = usePreferences().preferences.density === 'compact';
   const table = useReactTable({
     data: data ?? [],
     columns,
@@ -97,7 +99,7 @@ export function DataTable<T>({
                       <TableCell
                         key={cell.id}
                         className={cn(
-                          'py-3',
+                          compact ? 'py-2' : 'py-3',
                           (cell.column.columnDef.meta as { className?: string })?.className,
                         )}
                       >

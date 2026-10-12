@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, ne } from 'drizzle-orm';
 import type { SessionUser } from '@cr/contracts';
 import type { Database } from '../../db/client';
 import { refreshTokens, users } from '../../db/schema';
+import { AppError } from '../../shared/errors';
 import { hashPassword, verifyPassword } from './password';
 
 const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -10,13 +11,24 @@ const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const REUSE_GRACE_MS = 10_000;
 // Verified against when the email is unknown, so response time does not reveal which emails exist.
 const dummyHash = hashPassword(randomBytes(16).toString('hex'));
-const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
+export const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
 const toSession = (u: typeof users.$inferSelect): SessionUser => ({
   id: u.id,
   name: u.name,
   email: u.email,
   role: u.role,
 });
+
+/** Ends every session of a user (except, optionally, the one holding `keepTokenHash`). */
+export async function revokeAllTokens(db: Database, userId: number, keepTokenHash?: string) {
+  const mine = and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt));
+  await db
+    .update(refreshTokens)
+    .set({ revokedAt: new Date() })
+    .where(keepTokenHash ? and(mine, ne(refreshTokens.tokenHash, keepTokenHash)) : mine);
+}
+
+export type LoginResult = { user: SessionUser } | { disabled: true } | null;
 
 export function createAuthService(db: Database) {
   async function issueRefreshToken(userId: number) {
@@ -31,10 +43,29 @@ export function createAuthService(db: Database) {
   }
 
   return {
-    async login(email: string, password: string): Promise<SessionUser | null> {
+    /** `disabled` is only reported after a correct password, so it tells a guesser nothing. */
+    async login(email: string, password: string): Promise<LoginResult> {
       const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
       const ok = await verifyPassword(user?.passwordHash ?? (await dummyHash), password);
-      return user && user.active && ok ? toSession(user) : null;
+      if (!user || !ok) return null;
+      if (!user.active) return { disabled: true };
+      await db.update(users).set({ lastSignInAt: new Date() }).where(eq(users.id, user.id));
+      return { user: toSession(user) };
+    },
+
+    /** Sets a new password, clears a pending forced change and signs out the user's other sessions. */
+    async changePassword(userId: number, current: string, next: string, keepTokenHash?: string) {
+      const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      if (!user || !(await verifyPassword(user.passwordHash, current))) {
+        throw new AppError('WRONG_PASSWORD', 422, 'errors.WRONG_PASSWORD', {
+          fields: { currentPassword: 'errors.WRONG_PASSWORD' },
+        });
+      }
+      await db
+        .update(users)
+        .set({ passwordHash: await hashPassword(next), mustChangePassword: false })
+        .where(eq(users.id, userId));
+      await revokeAllTokens(db, userId, keepTokenHash);
     },
 
     issueRefreshToken,

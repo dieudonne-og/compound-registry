@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { signIn } from './helpers';
+import { db, signIn } from './helpers';
+
+// The language choice is saved to the account; put it back so later tests see English.
+test.afterEach(async () => {
+  const conn = await db();
+  await conn.query("UPDATE users SET preferences = NULL WHERE email = 'supervisor@example.com'");
+  await conn.end();
+});
 
 test('switching to French translates screens, dates and server messages', async ({ page }) => {
   await signIn(page, 'supervisor');

@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { queryClient } from '@/lib/query';
 import { ThemeProvider, useTheme } from '@/lib/theme';
 import { I18nProvider } from '@/i18n/i18n';
+import { PreferencesSync } from '@/features/settings/preferences-sync';
 import { router } from './router';
 import './styles.css';
 
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider delayDuration={300}>
+            <PreferencesSync />
             <RouterProvider router={router} />
             <ThemedToaster />
           </TooltipProvider>

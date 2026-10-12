@@ -24,6 +24,8 @@ export const translateIn = (language: Language, key: string, params?: Params) =>
 type I18nContextValue = {
   language: Language;
   locale: string;
+  dateStyle: DateStyle;
+  setDateStyle: (style: DateStyle) => void;
   setLanguage: (language: Language) => void;
   t: (key: string, params?: Params) => string;
 };
@@ -50,6 +52,7 @@ export function I18nProvider({ initial, children }: { initial?: Language; childr
   );
   // Set synchronously too, so requests made during the first render already carry the language.
   setRequestLanguage(language);
+  const [dateStyle, setDateStyle] = useState<DateStyle>('local');
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
@@ -65,10 +68,12 @@ export function I18nProvider({ initial, children }: { initial?: Language; childr
     () => ({
       language,
       locale: LOCALES[language],
+      dateStyle,
+      setDateStyle,
       setLanguage,
       t: (key, params) => translate(CATALOGS, language, key, params),
     }),
-    [language, setLanguage],
+    [language, setLanguage, dateStyle],
   );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
@@ -82,8 +87,8 @@ export function useI18n() {
 export const useT = () => useI18n().t;
 
 /** Formatters bound to the active locale and the user's date style. */
-export function useFormat(dateStyle: DateStyle = 'local') {
-  const { locale } = useI18n();
+export function useFormat() {
+  const { locale, dateStyle } = useI18n();
   return useMemo(
     () => ({
       kg: (v: string) => formatKg(v, locale),

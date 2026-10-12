@@ -25,6 +25,7 @@ import { compoundRoutes } from './modules/compounds/compounds.routes';
 import { referenceRoutes } from './modules/reference/reference.routes';
 import { productionRoutes } from './modules/production/production.routes';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
+import { meRoutes } from './modules/me/me.routes';
 import { createStorage, type Storage } from './shared/storage';
 
 declare module 'fastify' {
@@ -112,6 +113,7 @@ export async function buildApp(deps: { config: Config; db: Database; pool: Pool 
       await api.register(referenceRoutes, { prefix: '/reference' });
       await api.register(productionRoutes, { prefix: '/production' });
       await api.register(dashboardRoutes, { prefix: '/dashboard' });
+      await api.register(meRoutes, { prefix: '/me' });
     },
     { prefix: '/api' },
   );

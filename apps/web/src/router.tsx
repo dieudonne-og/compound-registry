@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Outlet } from 'react-router';
 import { AppShell } from '@/components/layout/app-shell';
 import { RequireAuth } from '@/features/auth/require-auth';
 import { PageLoader } from '@/components/common/page-loader';
@@ -8,6 +8,16 @@ export const router = createBrowserRouter([
     path: '/login',
     hydrateFallbackElement: <PageLoader fullScreen />,
     lazy: () => import('@/features/auth/login-page'),
+  },
+  {
+    path: '/change-password',
+    element: (
+      <RequireAuth>
+        <Outlet />
+      </RequireAuth>
+    ),
+    hydrateFallbackElement: <PageLoader fullScreen />,
+    children: [{ index: true, lazy: () => import('@/features/settings/change-password-page') }],
   },
   {
     element: (
@@ -60,6 +70,11 @@ export const router = createBrowserRouter([
             lazy: () => import('@/features/production/production-form-page'),
           },
         ],
+      },
+      {
+        path: 'settings',
+        handle: { crumb: 'crumbs.settings' },
+        lazy: () => import('@/features/settings/settings-page'),
       },
       { path: '*', lazy: () => import('@/features/not-found-page') },
     ],

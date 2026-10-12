@@ -1,4 +1,5 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
+import { Link } from 'react-router';
 import { useSession, useSignOut } from '@/features/auth/session';
 import { useT } from '@/i18n/i18n';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -40,6 +41,11 @@ export function UserMenu() {
           <Badge variant="secondary">{t(`roles.${user.role}`)}</Badge>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/settings">
+            <Settings /> {t('layout.settings')}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => signOut.mutate()}>
           <LogOut /> {t('layout.signOut')}
         </DropdownMenuItem>

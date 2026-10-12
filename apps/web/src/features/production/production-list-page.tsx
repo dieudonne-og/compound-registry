@@ -15,10 +15,8 @@ import { DatePicker } from '@/components/common/date-picker';
 import { EmptyState } from '@/components/common/empty-state';
 import { ErrorState } from '@/components/common/error-state';
 import { PageHeader } from '@/components/common/page-header';
-import { useCan } from '@/features/auth/session';
+import { useCan, usePreferences } from '@/features/auth/session';
 import { toQueryString, useProductionList, useReference } from './api';
-
-const PAGE_SIZE = 20;
 
 function SortHeader({
   label,
@@ -90,6 +88,7 @@ export function Component() {
   const can = useCan();
   const t = useT();
   const format = useFormat();
+  const pageSize = usePreferences().preferences.pageSize;
   const [search, setSearch] = useState(params.get('q') ?? '');
   const debounced = useDebouncedValue(search.trim(), 300);
   const sort = params.get('sort') ?? '-createdAt';
@@ -130,7 +129,7 @@ export function Component() {
     to: params.get('to') ?? undefined,
     sort,
   };
-  const query = useProductionList({ ...filters, page, pageSize: PAGE_SIZE });
+  const query = useProductionList({ ...filters, page, pageSize });
   const filtered = Object.entries(filters).some(([k, v]) => k !== 'sort' && v);
 
   const ariaSortFor = (field: string) =>
@@ -307,7 +306,7 @@ export function Component() {
           data={query.data?.items}
           total={query.data?.total ?? 0}
           page={page}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           onPageChange={(p) => set({ page: String(p) })}
           isLoading={query.isLoading}
           onRowClick={(r) => navigate(`/production/${r.id}`)}

@@ -14,7 +14,7 @@ import { DatePicker } from '@/components/common/date-picker';
 import { EmptyState } from '@/components/common/empty-state';
 import { ErrorState } from '@/components/common/error-state';
 import { ConfidenceChip } from '@/components/common/confidence-chip';
-import { useCan } from '@/features/auth/session';
+import { useCan, usePreferences } from '@/features/auth/session';
 import { useCompounds } from './api';
 
 function useColumns(): ColumnDef<CompoundSummary, unknown>[] {
@@ -69,6 +69,7 @@ export function Component() {
   const t = useT();
   const format = useFormat();
   const columns = useColumns();
+  const pageSize = usePreferences().preferences.pageSize;
   const page = Number(params.get('page') ?? 1);
   const [search, setSearch] = useState(params.get('purchaseId') ?? '');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
@@ -100,7 +101,7 @@ export function Component() {
 
   const query = useCompounds({
     page,
-    pageSize: 20,
+    pageSize,
     purchaseId: params.get('purchaseId') ?? undefined,
     from: params.get('from') ?? undefined,
     to: params.get('to') ?? undefined,
@@ -154,7 +155,7 @@ export function Component() {
           data={query.data?.items}
           total={query.data?.total ?? 0}
           page={page}
-          pageSize={20}
+          pageSize={pageSize}
           onPageChange={(p) => set({ page: String(p) })}
           isLoading={query.isLoading}
           onRowClick={(r) => navigate(`/compounds/${r.id}`)}
