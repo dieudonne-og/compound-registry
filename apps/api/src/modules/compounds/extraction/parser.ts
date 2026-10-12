@@ -30,7 +30,31 @@ const SKIP_LINE =
  * The look-behind stops matches inside identifiers such as "Man_Sn".
  */
 const PAIR =
-  /(?<![\w./-])([A-Za-z][A-Za-z0-9]{0,9})(?:\s*[=:≈-]\s*|\s+)(<\s*\d+(?:\.\d+)?|\d+(?:\.\d+)?|n\.?d\.?|<\s*(?:lod|dl)|\/|-)(?:\s*%)?(?:\s+(\d+(?:\.\d+)?)(?![\w.]))?(?![\w.])/gi;
+  /(?<![\p{L}\p{N}_./-])(\p{L}[\p{L}0-9]{0,9})(?:\s*[=:≈-]\s*|\s+)(<\s*\d+(?:\.\d+)?|\d+(?:\.\d+)?|n\.?d\.?|<\s*(?:lod|dl)|\/|-)(?:\s*%)?(?:\s+(\d+(?:\.\d+)?)(?![\p{L}\p{N}_.]))?(?![\p{L}\p{N}_.])/giu;
+
+/** Standard atomic masses (≤ 100) of elements that have their own column; larger ones cannot be percentages. */
+const ATOMIC_MASS: Record<string, string> = {
+  Cl: '35.45',
+  Ti: '47.867',
+  Mn: '54.938',
+  Fe: '55.845',
+  Co: '58.933',
+  Ni: '58.693',
+  Cu: '63.546',
+  Zn: '65.38',
+  As: '74.922',
+};
+
+function isAtomicMass(label: string, raw: string): boolean {
+  const mass = ATOMIC_MASS[label];
+  const decimals = raw.split('.')[1]?.length ?? 0;
+  if (!mass || decimals < 2) return false;
+  const massDecimals = mass.split('.')[1]!.length;
+  return (
+    roundDecimal(mass, Math.min(decimals, massDecimals)) ===
+    roundDecimal(raw, Math.min(decimals, massDecimals))
+  );
+}
 
 const MISSING = /^(?:\/|-|n\.?d\.?|<.*)$/i;
 const UNCERTAINTY_HEADER = /±|2\s*σ|\+\/-|\berror\b/i;
@@ -59,6 +83,8 @@ function buildField(
       plausibility = 0.3;
     } else if (!raw.includes('.')) {
       plausibility = 0.5; // lab percentages carry decimals; bare integers are usually seal or page numbers
+    } else if (isAtomicMass(match.def.label, raw)) {
+      plausibility = 0.5; // periodic-table stamps print the atomic mass next to the symbol
     }
   }
   if (match.fuzzy) flags.push('fuzzy_name');

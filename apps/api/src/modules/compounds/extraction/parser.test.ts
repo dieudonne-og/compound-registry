@@ -91,6 +91,16 @@ describe('parseLines — rules', () => {
     expect(r.unmapped).toEqual([]); // integers are never reported as unmapped element values
   });
 
+  it('reads French labels with accents', () => {
+    expect(valueOf(parseLines(lines('Humidité 0,52')), 'moisture_percent')?.value).toBe('0.5200');
+  });
+
+  it('flags values equal to the element’s atomic mass, as printed on seals and periodic-table stamps', () => {
+    expect(valueOf(parseLines(lines('Cu 63.546')), 'cu_percent')?.flags).toContain('low_confidence');
+    expect(valueOf(parseLines(lines('Fe 55.85')), 'fe_percent')?.flags).toContain('low_confidence');
+    expect(valueOf(parseLines(lines('Cu 12.75')), 'cu_percent')?.flags).toEqual([]);
+  });
+
   it('marks conflicting duplicates and keeps both candidates', () => {
     const r = parseLines(lines('Sn = 63.63\nSn = 36.63'));
     expect(valueOf(r, 'sn_percent')).toMatchObject({
