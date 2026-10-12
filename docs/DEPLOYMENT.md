@@ -82,10 +82,11 @@ pnpm test:e2e           # starts the API on :3100 and the web app on :5174 again
 
 ### Web (build time)
 
-| Variable                  | Default | Purpose                                                                     |
-| ------------------------- | ------- | --------------------------------------------------------------------------- |
-| `VITE_MAX_UPLOAD_MB`      | `10`    | Size limit shown and checked in the browser (keep equal to `MAX_UPLOAD_MB`) |
-| `VITE_SHOW_DEMO_ACCOUNTS` | —       | `true` shows the demo account shortcuts on the sign-in page                 |
+| Variable                  | Default         | Purpose                                                                                                 |
+| ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------- |
+| `VITE_MAX_UPLOAD_MB`      | `10`            | Size limit shown and checked in the browser (keep equal to `MAX_UPLOAD_MB`)                             |
+| `VITE_SHOW_DEMO_ACCOUNTS` | —               | `true` shows the demo account shortcuts on the sign-in page                                             |
+| `VITE_APP_TIMEZONE`       | `Africa/Kigali` | Business time zone for "today" in date pickers; Compose sets it from `APP_TIMEZONE` so both sides agree |
 
 ### Docker Compose
 

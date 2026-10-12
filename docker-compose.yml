@@ -50,6 +50,7 @@ services:
       args:
         VITE_SHOW_DEMO_ACCOUNTS: ${SHOW_DEMO_ACCOUNTS:-true}
         VITE_MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+        VITE_APP_TIMEZONE: ${APP_TIMEZONE:-Africa/Kigali}
     depends_on: [api]
     ports: ['8080:80']
     environment:

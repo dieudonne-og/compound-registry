@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { businessToday } from '@/lib/business-day';
 import {
   createProductionInput,
   productionCode,
@@ -65,13 +66,8 @@ export function changedCriticalFields(
   );
 }
 
-const localToday = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
 /** Mirrors the server rules so most mistakes are caught before submitting; the server re-validates everything. */
-export function productionFormSchema(original?: ProductionRecord, today = localToday()) {
+export function productionFormSchema(original?: ProductionRecord, today = businessToday()) {
   const base = createProductionInput.omit({ productionCode: true }).extend({
     productionCode: original ? productionCode : z.string().optional(),
     productionDate: createProductionInput.shape.productionDate.refine(

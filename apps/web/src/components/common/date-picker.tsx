@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { businessToday } from '@/lib/business-day';
 
 type Props = {
   id?: string;
@@ -50,7 +51,7 @@ export function DatePicker({
           defaultMonth={selected}
           autoFocus
           captionLayout="dropdown"
-          disabled={disableFuture ? { after: new Date() } : undefined}
+          disabled={disableFuture ? { after: parseISO(businessToday()) } : undefined}
           onSelect={(d) => {
             onChange(d ? format(d, 'yyyy-MM-dd') : undefined);
             setOpen(false);
