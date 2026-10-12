@@ -724,4 +724,54 @@ export const webEn = {
         'Recalculates the fingerprint of every history entry and compares the result with the record as it is stored now.',
     },
   },
+  tour: {
+    next: 'Next',
+    prev: 'Back',
+    done: 'Done',
+    progress: '{current} of {total}',
+    welcome: {
+      title: 'Welcome to Compound Registry',
+      body: 'A one-minute tour of the main places. Press Escape to skip it; you can replay it from Help.',
+    },
+    nav: {
+      title: 'Navigation',
+      body: 'Every part of the application is here. What you see depends on your role.',
+    },
+    search: {
+      title: 'Search',
+      body: 'Jump to any page, or find a production record by its ID or tag number. Shortcut: Ctrl K.',
+    },
+    upload: {
+      title: 'Upload a report',
+      body: 'Upload a laboratory report. The compound values are read automatically and you confirm them before they are saved.',
+    },
+    register: {
+      title: 'Register production',
+      body: 'Record a production batch. Changes to its ID, tag, weight or mineral type are kept in a tamper-evident history.',
+    },
+    history: {
+      title: 'Production records',
+      body: 'Search, filter and export records. Open one to see its history and verify it.',
+    },
+    audit: {
+      title: 'Audit production',
+      body: 'Open any record to read its change history and verify that nothing was altered.',
+    },
+    admin: {
+      title: 'Administration',
+      body: 'Manage users, reference data and the activity log.',
+    },
+    language: {
+      title: 'Language',
+      body: 'Switch between English and French at any time. Your choice is saved to your account.',
+    },
+    theme: {
+      title: 'Theme',
+      body: 'Choose light, dark or your system setting.',
+    },
+    replay: {
+      title: 'Help is always here',
+      body: 'Guides, keyboard shortcuts and this tour are in Help. Press ? to open it from anywhere.',
+    },
+  },
 } as const;

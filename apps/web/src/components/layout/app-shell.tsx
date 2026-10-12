@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { HelpContext } from '@/features/help/help-context';
 import { HelpPanel } from '@/features/help/help-panel';
 import { useShortcuts } from '@/features/help/shortcuts';
+import { useTour } from '@/features/tour/use-tour';
 import { useT } from '@/i18n/i18n';
 import { Suspense, useState } from 'react';
 import { Outlet } from 'react-router';
@@ -31,7 +32,8 @@ export function AppShell() {
   const navigate = useNavigate();
   const openHelp = useCallback(() => setHelpOpen(true), []);
   useShortcuts({ openHelp, navigate });
-  const help = useMemo(() => ({ openHelp, startTour: () => {} }), [openHelp]);
+  const { start: startTour } = useTour();
+  const help = useMemo(() => ({ openHelp, startTour }), [openHelp, startTour]);
   const crumb = useMatches()
     .map((m) => (m.handle as { crumb?: string } | undefined)?.crumb)
     .filter(Boolean)

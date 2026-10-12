@@ -735,4 +735,54 @@ export const webFr: Shape<typeof webEn> = {
         'Recalcule l’empreinte de chaque entrée de l’historique et compare le résultat à l’enregistrement tel qu’il est stocké actuellement.',
     },
   },
+  tour: {
+    next: 'Suivant',
+    prev: 'Précédent',
+    done: 'Terminer',
+    progress: '{current} sur {total}',
+    welcome: {
+      title: 'Bienvenue dans Compound Registry',
+      body: 'Une visite d’une minute des principaux endroits. Appuyez sur Échap pour la passer ; vous pourrez la relancer depuis l’Aide.',
+    },
+    nav: {
+      title: 'Navigation',
+      body: 'Toutes les parties de l’application sont ici. Ce que vous voyez dépend de votre rôle.',
+    },
+    search: {
+      title: 'Recherche',
+      body: 'Allez à n’importe quelle page ou trouvez un enregistrement de production par son identifiant ou son numéro d’étiquette. Raccourci : Ctrl K.',
+    },
+    upload: {
+      title: 'Téléverser un rapport',
+      body: 'Téléversez un rapport de laboratoire. Les valeurs des composés sont lues automatiquement et vous les confirmez avant leur enregistrement.',
+    },
+    register: {
+      title: 'Enregistrer une production',
+      body: 'Enregistrez un lot de production. Les modifications de son identifiant, de son étiquette, de son poids ou de son type de minerai sont conservées dans un historique inviolable.',
+    },
+    history: {
+      title: 'Enregistrements de production',
+      body: 'Recherchez, filtrez et exportez les enregistrements. Ouvrez-en un pour voir et vérifier son historique.',
+    },
+    audit: {
+      title: 'Auditer la production',
+      body: 'Ouvrez n’importe quel enregistrement pour lire son historique et vérifier que rien n’a été modifié.',
+    },
+    admin: {
+      title: 'Administration',
+      body: 'Gérez les utilisateurs, les données de référence et le journal d’activité.',
+    },
+    language: {
+      title: 'Langue',
+      body: 'Passez de l’anglais au français à tout moment. Votre choix est enregistré dans votre compte.',
+    },
+    theme: {
+      title: 'Thème',
+      body: 'Choisissez le thème clair, sombre ou celui de votre système.',
+    },
+    replay: {
+      title: 'L’aide est toujours là',
+      body: 'Les guides, les raccourcis clavier et cette visite se trouvent dans l’Aide. Appuyez sur ? pour l’ouvrir depuis n’importe où.',
+    },
+  },
 };

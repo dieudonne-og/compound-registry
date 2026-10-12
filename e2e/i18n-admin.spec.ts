@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { db, signIn } from './helpers';
+import { closeTour, db, signIn, tourDialog } from './helpers';
 
 // The language choice is saved to the account; put it back so later tests see English.
 test.afterEach(async () => {
@@ -49,6 +49,13 @@ test('an administrator adds a user who must change the password at first sign-in
   await other.getByLabel('Confirm new password').fill('diane-new-passphrase');
   await other.getByRole('button', { name: 'Change password' }).click();
   await expect(other).toHaveURL(/\/$/);
+
+  // A new user is offered the guided tour once.
+  await expect(tourDialog(other)).toBeVisible();
+  await closeTour(other);
+  await other.reload();
+  await other.waitForTimeout(1500);
+  await expect(tourDialog(other)).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Done' }).click();
   await page.goto('/admin/activity');
