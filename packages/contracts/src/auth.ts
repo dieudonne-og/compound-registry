@@ -4,8 +4,8 @@ export const ROLES = ['admin', 'supervisor', 'operator', 'auditor'] as const;
 export type Role = (typeof ROLES)[number];
 
 export const loginInput = z.object({
-  email: z.string().trim().toLowerCase().email('Enter a valid email address'),
-  password: z.string().min(1, 'Enter your password').max(200),
+  email: z.string().trim().toLowerCase().email('validation.email'),
+  password: z.string().min(1, 'validation.passwordRequired').max(200),
 });
 export type LoginInput = z.infer<typeof loginInput>;
 

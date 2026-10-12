@@ -6,9 +6,9 @@ import { pageQuery } from './pagination';
 export const purchaseId = z
   .string()
   .trim()
-  .min(1, 'Purchase ID is required')
-  .max(20, 'Purchase ID is at most 20 characters')
-  .regex(/^[A-Za-z0-9][A-Za-z0-9\-_/.]*$/, 'Use letters, digits and - _ / . only');
+  .min(1, 'validation.purchaseId.required')
+  .max(20, 'validation.purchaseId.max')
+  .regex(/^[A-Za-z0-9][A-Za-z0-9\-_/.]*$/, 'validation.purchaseId.chars');
 
 export const EXTRACTION_FLAGS = [
   'low_confidence',

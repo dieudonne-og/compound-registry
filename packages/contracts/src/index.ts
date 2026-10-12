@@ -8,3 +8,4 @@ export * from './compounds';
 export * from './production';
 export * from './reference';
 export * from './dashboard';
+export * from './i18n';

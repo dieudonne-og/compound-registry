@@ -23,4 +23,4 @@ export const referenceInput = z.object({
 export const referencePatch = referenceInput
   .partial()
   .extend({ active: z.boolean().optional() })
-  .refine((patch) => Object.keys(patch).length > 0, 'Provide at least one field to change');
+  .refine((patch) => Object.keys(patch).length > 0, 'validation.reference.nothingToChange');
