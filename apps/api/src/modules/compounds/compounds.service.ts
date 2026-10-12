@@ -20,6 +20,7 @@ import type { Storage } from '../../shared/storage';
 import { inspectUpload } from './extraction/intake';
 import { extractReport } from './extraction/pipeline';
 import { createSemaphore } from '../../shared/semaphore';
+import { dayStartUtc, nextDay } from '../../shared/time';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 type StoredResult = {
@@ -193,9 +194,10 @@ export function createCompoundService({
     async list(query: CompoundListQuery): Promise<Page<CompoundSummary>> {
       const where = and(
         query.purchaseId ? like(compound.purchaseId, `${escapeLike(query.purchaseId)}%`) : undefined,
-        query.from ? gte(compound.extractionDate, new Date(`${query.from}T00:00:00Z`)) : undefined,
+        // Filter by business day (APP_TIMEZONE), like every other date in the application.
+        query.from ? gte(compound.extractionDate, dayStartUtc(query.from, config.APP_TIMEZONE)) : undefined,
         query.to
-          ? lt(compound.extractionDate, new Date(new Date(`${query.to}T00:00:00Z`).getTime() + DAY_MS))
+          ? lt(compound.extractionDate, dayStartUtc(nextDay(query.to), config.APP_TIMEZONE))
           : undefined,
       );
       const [rows, [total]] = await Promise.all([
@@ -260,7 +262,10 @@ export function createCompoundService({
         );
       for (const e of expired) {
         await storage.remove(e.key);
-        await db.update(compoundExtraction).set({ status: 'expired' }).where(eq(compoundExtraction.id, e.id));
+        await db
+          .update(compoundExtraction)
+          .set({ status: 'expired' })
+          .where(and(eq(compoundExtraction.id, e.id), eq(compoundExtraction.status, 'pending')));
       }
       return expired.length;
     },
