@@ -37,7 +37,7 @@ export const productionRoutes: FastifyPluginAsyncZod = async (app) => {
       const key = request.headers['idempotency-key'];
       const run = async () => ({ status: 201, body: await service.create(request.body, request.user) });
       if (!key) return reply.status(201).send((await run()).body);
-      if (!KEY.test(key)) throw validationError({ 'idempotency-key': 'Use 8–64 letters, digits or dashes.' });
+      if (!KEY.test(key)) throw validationError({ 'idempotency-key': 'validation.idempotencyKey' });
       const result = await withIdempotency(app.db, { key, userId: request.user.id, body: request.body }, run);
       if (result.replayed) reply.header('idempotent-replayed', 'true');
       // Only successful creations are stored for replay, so the stored status is always 201.

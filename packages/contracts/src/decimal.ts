@@ -12,11 +12,11 @@ export function roundDecimal(value: string, scale: number): string {
 export const percentValue = z
   .string()
   .trim()
-  .regex(/^\d{1,3}(\.\d{1,4})?$/, 'Enter a number with up to 4 decimal places')
-  .refine((v) => Number(v) <= 100, 'Must be between 0 and 100');
+  .regex(/^\d{1,3}(\.\d{1,4})?$/, 'validation.percent.format')
+  .refine((v) => Number(v) <= 100, 'validation.percent.range');
 
 export const weightKgValue = z
   .string()
   .trim()
-  .regex(/^\d{1,9}(\.\d{1,3})?$/, 'Enter a number with up to 3 decimal places')
-  .refine((v) => /[1-9]/.test(v), 'Must be greater than zero');
+  .regex(/^\d{1,9}(\.\d{1,3})?$/, 'validation.weight.format')
+  .refine((v) => /[1-9]/.test(v), 'validation.weight.positive');

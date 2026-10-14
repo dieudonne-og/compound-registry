@@ -14,11 +14,13 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { useT } from '@/i18n/i18n';
 import { NAV_SECTIONS } from './nav';
 
 export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const navigate = useNavigate();
   const can = useCan();
+  const t = useT();
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search.trim(), 250);
 
@@ -49,18 +51,16 @@ export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChang
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Search"
-      description="Jump to a page or find a production record"
+      title={t('layout.command.title')}
+      description={t('layout.command.description')}
     >
-      <CommandInput
-        placeholder="Search pages, production IDs or tag numbers…"
-        value={search}
-        onValueChange={setSearch}
-      />
+      <CommandInput placeholder={t('layout.command.placeholder')} value={search} onValueChange={setSearch} />
       <CommandList>
-        <CommandEmpty>{records.isFetching ? 'Searching…' : 'No results.'}</CommandEmpty>
+        <CommandEmpty>
+          {records.isFetching ? t('layout.command.searching') : t('layout.command.empty')}
+        </CommandEmpty>
         {!!records.data?.items.length && (
-          <CommandGroup heading="Production records">
+          <CommandGroup heading={t('nav.production')}>
             {records.data.items.map((r) => (
               <CommandItem
                 key={r.id}
@@ -74,12 +74,12 @@ export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChang
           </CommandGroup>
         )}
         {NAV_SECTIONS.map((section) => (
-          <CommandGroup key={section.title} heading={section.title}>
+          <CommandGroup key={section.title} heading={t(section.title)}>
             {section.items
               .filter((i) => !i.action || can(i.action))
               .map(({ to, label, icon: Icon }) => (
                 <CommandItem key={to} onSelect={() => go(to)}>
-                  <Icon /> {label}
+                  <Icon /> {t(label)}
                 </CommandItem>
               ))}
           </CommandGroup>

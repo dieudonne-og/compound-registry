@@ -4,16 +4,17 @@ Interactive documentation (OpenAPI 3, generated from the same schemas the server
 
 ## Conventions
 
-| Topic          | Rule                                                                                                                              |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Base URL       | `/api`                                                                                                                            |
-| Authentication | Session cookies set by `POST /api/auth/login` (`access_token` 15 min, `refresh_token` 7 days, both `httpOnly`, `SameSite=Strict`) |
-| CSRF           | Every `POST`, `PUT`, `PATCH`, `DELETE` (except login) must send header `x-csrf-token` equal to the readable `csrf_token` cookie   |
-| Decimals       | Sent and returned as strings: percentages `"57.5700"` (DECIMAL 10,4), weights `"320.300"` (DECIMAL 12,3)                          |
-| Dates          | Calendar dates `YYYY-MM-DD`; timestamps ISO-8601 UTC (`2026-10-11T16:09:55.438Z`)                                                 |
-| Missing values | `null` — never `0`                                                                                                                |
-| Pagination     | `?page=1&pageSize=20` (max 100) → `{ items, total, page, pageSize }`                                                              |
-| Tracing        | Every response has an `x-request-id` header; errors repeat it as `error.requestId`                                                |
+| Topic          | Rule                                                                                                                                                |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base URL       | `/api`                                                                                                                                              |
+| Authentication | Session cookies set by `POST /api/auth/login` (`access_token` 15 min, `refresh_token` 7 days, both `httpOnly`, `SameSite=Strict`)                   |
+| CSRF           | Every `POST`, `PUT`, `PATCH`, `DELETE` (except login) must send header `x-csrf-token` equal to the readable `csrf_token` cookie                     |
+| Decimals       | Sent and returned as strings: percentages `"57.5700"` (DECIMAL 10,4), weights `"320.300"` (DECIMAL 12,3)                                            |
+| Dates          | Calendar dates `YYYY-MM-DD`; timestamps ISO-8601 UTC (`2026-10-11T16:09:55.438Z`)                                                                   |
+| Missing values | `null` — never `0`                                                                                                                                  |
+| Pagination     | `?page=1&pageSize=20` (max 100) → `{ items, total, page, pageSize }`                                                                                |
+| Language       | Send `Accept-Language` (`en` or `fr`); error `message` texts and `details.fields` come back in that language, English otherwise. Codes never change |
+| Tracing        | Every response has an `x-request-id` header; errors repeat it as `error.requestId`                                                                  |
 
 ## Errors
 
@@ -52,7 +53,15 @@ All errors share one shape:
 | `FILE_TOO_LARGE`                             | 413  | Upload exceeds `MAX_UPLOAD_MB`                                                                                                                                          |
 | `UNSUPPORTED_FILE_TYPE`                      | 415  | Content is not PDF/JPEG/PNG, or the file name disagrees with the content                                                                                                |
 | `RATE_LIMITED`                               | 429  | Too many requests (login: 5 per minute per IP and email; extraction: 20 per minute)                                                                                     |
+| `WRONG_PASSWORD`                             | 422  | The current password given to `change-password` is wrong; `details.fields.currentPassword`                                                                              |
+| `SELF_CHANGE_NOT_ALLOWED`                    | 422  | An administrator tried to disable their own account or remove their own administrator role                                                                              |
+| `ACCOUNT_DISABLED`                           | 401  | The account was disabled by an administrator; its sessions end at the next request                                                                                      |
+| `PASSWORD_CHANGE_REQUIRED`                   | 403  | The user signed in with a temporary password and must call `change-password` first                                                                                      |
+| `LAST_ADMIN`                                 | 409  | The change would leave no active administrator                                                                                                                          |
+| `EMAIL_TAKEN`                                | 409  | Another account already uses this email; `details.field` is `email`                                                                                                     |
 | `INTERNAL_ERROR`                             | 500  | Unexpected failure; details are logged, never returned                                                                                                                  |
+
+In French (`Accept-Language: fr`) the same error reads `"message": "Certains champs demandent votre attention."` and `"tagNumber": "Le numéro d’étiquette est obligatoire"`; `code` and the shape stay the same.
 
 ## Permissions
 
@@ -66,6 +75,7 @@ All errors share one shape:
 | Change the production ID                 |   ✓   |     —      |      —      |    —    |
 | View history and verify integrity        |   ✓   |     ✓      |      —      |    ✓    |
 | Manage reference data                    |   ✓   |     —      |      —      |    —    |
+| Manage users and read the activity log   |   ✓   |     —      |      —      |    —    |
 
 ## Authentication
 
@@ -86,7 +96,33 @@ Rotates the refresh token and issues a new access token. Re-using an already-rot
 
 ### `POST /api/auth/logout` → `204`
 
-### `GET /api/auth/me` → `200 { "user": … }` or `401`
+### `GET /api/auth/me`
+
+`200` → `{ "user": …, "mustChangePassword": false, "preferences": { "language": "fr", "theme": "system", "density": "comfortable", "pageSize": 20, "dateStyle": "local", "tour": null } }` or `401`.
+
+### `POST /api/auth/change-password` → `204`
+
+```json
+{ "currentPassword": "old passphrase", "newPassword": "at least twelve characters" }
+```
+
+The new password needs at least 12 characters. Every other session of the user is signed out; the current one stays. Errors: `WRONG_PASSWORD`, `VALIDATION_FAILED`.
+
+While `mustChangePassword` is `true` (after an administrator created the account or reset its password), every other endpoint except `GET /api/auth/me`, `POST /api/auth/logout` and `/api/me/preferences` answers `403 PASSWORD_CHANGE_REQUIRED`.
+
+## Preferences
+
+- `GET /api/me/preferences` → the preferences object shown above. Stored values that are missing or no longer valid come back as defaults.
+- `PUT /api/me/preferences` with any subset, e.g. `{ "language": "fr", "pageSize": 50 }` → `200` with the merged preferences. Unknown keys or invalid values → `422 VALIDATION_FAILED`.
+
+| Key         | Values                                 | Default          |
+| ----------- | -------------------------------------- | ---------------- |
+| `language`  | `en`, `fr`                             | `null` (browser) |
+| `theme`     | `light`, `dark`, `system`              | `system`         |
+| `density`   | `comfortable`, `compact`               | `comfortable`    |
+| `pageSize`  | `10`, `20`, `50`                       | `20`             |
+| `dateStyle` | `local`, `iso`                         | `local`          |
+| `tour`      | `{ "version": 1, "completedAt": "…" }` | `null`           |
 
 ## Compounds
 
@@ -318,9 +354,62 @@ Verification reads the record and its events in one consistent snapshot, so an e
 
 ## Reference data
 
-- `GET /api/reference/{companies|locations|agents|mineral-types}` → `[{ "id": 1, "name": "Cassiterite (Tin)", "code": "SN", "active": true }]` (admins may add `?includeInactive=true`)
+- `GET /api/reference/{companies|locations|agents|mineral-types}` → `[{ "id": 1, "name": "Cassiterite (Tin)", "code": "SN", "active": true, "usageCount": 0 }]`. Admins may add `?includeInactive=true`; `usageCount` (production records using the entry) is computed only then and is `0` otherwise.
 - `POST /api/reference/{kind}` (admin) → `201`; mineral types require `code`
 - `PATCH /api/reference/{kind}/{id}` (admin) → `200`; `{ "active": false }` retires an entry without breaking existing records
+
+Every create, rename, retirement and reactivation is recorded in the activity log.
+
+## Users and activity (administrators)
+
+### `GET /api/users`
+
+`200` → `[{ "id": 5, "name": "Diane Uwimana", "email": "diane@example.com", "role": "operator", "active": true, "mustChangePassword": true, "lastSignInAt": null, "createdAt": "2026-10-12T09:14:03.000Z" }]`
+
+### `POST /api/users`
+
+```json
+{ "name": "Diane Uwimana", "email": "diane@example.com", "role": "operator" }
+```
+
+`201` → `{ "user": { … }, "temporaryPassword": "q7XkPm2vRt9wHa4s" }`. The 16-character temporary password is shown once, is never logged or stored in clear, and must be changed at first sign-in. Errors: `EMAIL_TAKEN`, `VALIDATION_FAILED`.
+
+### `PATCH /api/users/:id`
+
+Any of `{ "name": "…", "role": "supervisor", "active": false }` → `200` with the user. A role change applies from the user's next request; disabling signs the user out everywhere. Errors: `SELF_CHANGE_NOT_ALLOWED`, `LAST_ADMIN`, `NOT_FOUND`.
+
+### `POST /api/users/:id/reset-password`
+
+`200` → `{ "user": { … }, "temporaryPassword": "…" }`; the user is signed out everywhere and must change the password at the next sign-in.
+
+### `GET /api/admin/activity?action=user.created&targetType=user&page=1&pageSize=20`
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "actor": { "id": 1, "label": "Alice Uwase (admin)" },
+      "action": "user.updated",
+      "targetType": "user",
+      "targetId": 5,
+      "targetLabel": "Diane Uwimana (diane@example.com)",
+      "before": { "role": "operator" },
+      "after": { "role": "supervisor" },
+      "occurredAt": "2026-10-12T09:20:41.000Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+`action` is one of `user.created`, `user.updated`, `user.disabled`, `user.enabled`, `user.password_reset`, `reference.created`, `reference.updated`, `reference.retired`, `reference.reactivated`; `targetType` is `user` or `reference`. Only changed fields appear in `before` and `after`; passwords never do.
+
+## Help
+
+`GET /api/help/contact` (any signed-in user) → `{ "email": "admin@example.com" }`: the administrator shown in the help panel, or `null` when there is none.
 
 ## Dashboard
 

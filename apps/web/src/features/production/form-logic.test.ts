@@ -55,7 +55,7 @@ describe('production form logic', () => {
   });
 
   it('keeps a retired reference selectable for records that already use it', () => {
-    const active = [{ id: 1, name: 'Akagera Minerals Ltd', code: null, active: true }];
+    const active = [{ id: 1, name: 'Akagera Minerals Ltd', code: null, active: true, usageCount: 0 }];
     expect(optionsWithCurrent(active, { id: 9, name: 'Old Co' })).toEqual([
       { value: 1, label: 'Akagera Minerals Ltd', hint: null },
       { value: 9, label: 'Old Co (retired)', hint: null },

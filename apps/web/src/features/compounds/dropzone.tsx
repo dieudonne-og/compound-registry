@@ -1,7 +1,8 @@
+import { useI18n } from '@/i18n/i18n';
 import { useId, useRef, useState } from 'react';
 import { FileText, ImageIcon, UploadCloud, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ACCEPT, MAX_UPLOAD_MB, validateReportFile } from '@/lib/files';
+import { ACCEPT, MAX_UPLOAD_MB, validateReportFile, type FileProblem } from '@/lib/files';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -15,7 +16,10 @@ type Props = {
 export function Dropzone({ file, onFile, error, describedBy, labelledBy }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const { t, locale } = useI18n();
+  const [localError, setLocalError] = useState<FileProblem | null>(null);
+  const mb = (n: number) =>
+    new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(n);
   const hintId = useId();
 
   const pick = (f: File | undefined) => {
@@ -24,7 +28,9 @@ export function Dropzone({ file, onFile, error, describedBy, labelledBy }: Props
     setLocalError(problem);
     onFile(problem ? null : f);
   };
-  const message = localError ?? error;
+  const message = localError
+    ? t(localError.key, localError.params && { size: mb(localError.params.size), max: localError.params.max })
+    : error && t(error);
 
   if (file) {
     const Icon = file.type.startsWith('image/') ? ImageIcon : FileText;
@@ -35,14 +41,16 @@ export function Dropzone({ file, onFile, error, describedBy, labelledBy }: Props
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{file.name}</p>
-          <p className="num text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+          <p className="num text-xs text-muted-foreground">
+            {t('upload.drop.size', { size: mb(file.size / 1024 / 1024) })}
+          </p>
         </div>
         <Button
           type="button"
           variant="ghost"
           size="icon"
           onClick={() => onFile(null)}
-          aria-label="Remove file"
+          aria-label={t('upload.drop.remove')}
         >
           <X />
         </Button>
@@ -78,11 +86,11 @@ export function Dropzone({ file, onFile, error, describedBy, labelledBy }: Props
           <UploadCloud className="size-6" />
         </span>
         <span className="font-medium">
-          Drop the lab report here, or{' '}
-          <span className="text-primary underline-offset-4 hover:underline">browse</span>
+          {t('upload.drop.prompt')}{' '}
+          <span className="text-primary underline-offset-4 hover:underline">{t('upload.drop.browse')}</span>
         </span>
         <span id={hintId} className="text-sm text-muted-foreground">
-          PDF, JPG, JPEG or PNG up to {MAX_UPLOAD_MB} MB. Scans and phone photos work.
+          {t('upload.drop.hint', { max: MAX_UPLOAD_MB })}
         </span>
       </button>
       <input

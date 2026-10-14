@@ -6,9 +6,9 @@ import { pageQuery } from './pagination';
 export const purchaseId = z
   .string()
   .trim()
-  .min(1, 'Purchase ID is required')
-  .max(20, 'Purchase ID is at most 20 characters')
-  .regex(/^[A-Za-z0-9][A-Za-z0-9\-_/.]*$/, 'Use letters, digits and - _ / . only');
+  .min(1, 'validation.purchaseId.required')
+  .max(20, 'validation.purchaseId.max')
+  .regex(/^[A-Za-z0-9][A-Za-z0-9\-_/.]*$/, 'validation.purchaseId.chars');
 
 export const EXTRACTION_FLAGS = [
   'low_confidence',
@@ -44,7 +44,9 @@ export type UnmappedValue = z.infer<typeof unmappedValue>;
 
 export const extractionWarning = z.object({
   code: z.enum(['TOTAL_EXCEEDS_100', 'DUPLICATE_FILE', 'LOW_OVERALL_CONFIDENCE']),
+  /** English text; screens translate from `code` and `params` (absent on warnings saved before they existed). */
   message: z.string(),
+  params: z.record(z.union([z.string(), z.number()])).optional(),
 });
 export type ExtractionWarning = z.infer<typeof extractionWarning>;
 

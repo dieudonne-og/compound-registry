@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/i18n';
 import { useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ type Phase =
 
 export function Component() {
   const navigate = useNavigate();
+  const t = useT();
   const [phase, setPhase] = useState<Phase>({ name: 'select' });
   const [purchaseId, setPurchaseId] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -51,7 +53,7 @@ export function Component() {
     const pid = purchaseIdSchema.safeParse(purchaseId);
     const next = {
       purchaseId: pid.success ? undefined : pid.error.issues[0]!.message,
-      file: file ? undefined : 'Choose a laboratory report.',
+      file: file ? undefined : 'upload.chooseReport',
     };
     setErrors(next);
     if (next.purchaseId || next.file || !file) return;
@@ -77,9 +79,7 @@ export function Component() {
         setErrors({ purchaseId: err.fieldErrors.purchaseId });
       else
         setFailure(
-          err instanceof ApiError
-            ? err
-            : new ApiError(0, 'INTERNAL_ERROR', 'The report could not be processed.'),
+          err instanceof ApiError ? err : new ApiError(0, 'INTERNAL_ERROR', t('upload.processFailed')),
         );
     }
   }
@@ -92,10 +92,7 @@ export function Component() {
 
   return (
     <>
-      <PageHeader
-        title="Upload laboratory report"
-        description="Values are extracted automatically. You review them before anything is saved."
-      />
+      <PageHeader title={t('upload.title')} description={t('upload.description')} />
 
       {phase.name === 'review' && file ? (
         <ReviewPanel
@@ -107,13 +104,13 @@ export function Component() {
             confirm.mutate(body, {
               onSuccess: ({ id }) => {
                 saved.current = true;
-                toast.success('Analysis saved', {
-                  action: { label: 'Upload another', onClick: () => navigate('/compounds/upload') },
+                toast.success(t('upload.saved'), {
+                  action: { label: t('upload.uploadAnother'), onClick: () => navigate('/compounds/upload') },
                 });
                 navigate(`/compounds/${id}`);
               },
               onError: (err) =>
-                toast.error(err instanceof ApiError ? err.message : 'Saving failed. Please try again.'),
+                toast.error(err instanceof ApiError ? t(err.message) : t('upload.saveFailed')),
             })
           }
         />
@@ -123,16 +120,16 @@ export function Component() {
             <Alert variant="destructive">
               <FileWarning />
               <AlertTitle>
-                {failure.code === 'EXTRACTION_FAILED' ? 'We could not read this report' : 'Upload failed'}
+                {failure.code === 'EXTRACTION_FAILED' ? t('upload.failedRead') : t('upload.failed')}
               </AlertTitle>
-              <AlertDescription>{failure.message}</AlertDescription>
+              <AlertDescription>{t(failure.message)}</AlertDescription>
             </Alert>
           )}
           {phase.name === 'processing' ? (
             <>
               <ProcessingStages uploadPct={phase.pct} />
               <Button variant="ghost" className="w-full" onClick={() => abort.current?.abort()}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </>
           ) : (
@@ -141,7 +138,7 @@ export function Component() {
                 <form onSubmit={submit} noValidate className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="purchaseId">
-                      Purchase ID{' '}
+                      {t('upload.purchaseId')}{' '}
                       <span className="text-destructive" aria-hidden>
                         *
                       </span>
@@ -150,7 +147,7 @@ export function Component() {
                       id="purchaseId"
                       value={purchaseId}
                       onChange={(e) => setPurchaseId(e.target.value)}
-                      placeholder="e.g. PO-2026-0418"
+                      placeholder={t('upload.purchaseIdPlaceholder')}
                       className="num"
                       maxLength={20}
                       aria-invalid={!!errors.purchaseId}
@@ -161,7 +158,7 @@ export function Component() {
                   </div>
                   <div className="space-y-2">
                     <Label id="report-label">
-                      Laboratory report{' '}
+                      {t('upload.report')}{' '}
                       <span className="text-destructive" aria-hidden>
                         *
                       </span>
@@ -177,7 +174,7 @@ export function Component() {
                     />
                   </div>
                   <Button type="submit" size="lg" className="w-full">
-                    Extract values
+                    {t('upload.extract')}
                   </Button>
                 </form>
               </CardContent>
@@ -189,14 +186,14 @@ export function Component() {
       <AlertDialog open={blocker.state === 'blocked'}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The extracted values have not been saved. You will need to upload the report again.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('upload.leave.title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('upload.leave.description')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>Stay</AlertDialogCancel>
-            <AlertDialogAction onClick={() => blocker.proceed?.()}>Leave</AlertDialogAction>
+            <AlertDialogCancel onClick={() => blocker.reset?.()}>{t('upload.leave.stay')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => blocker.proceed?.()}>
+              {t('upload.leave.leave')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

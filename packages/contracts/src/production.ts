@@ -7,41 +7,38 @@ export type CriticalField = (typeof CRITICAL_FIELDS)[number];
 
 const isoDate = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use the format YYYY-MM-DD')
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'validation.date.format')
   .refine((v) => {
     const d = new Date(`${v}T00:00:00Z`);
     return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(v);
-  }, 'Enter a real calendar date');
+  }, 'validation.date.real');
 
-const refId = (label: string) =>
-  z
-    .number({ required_error: `${label} is required`, invalid_type_error: `${label} is required` })
-    .int()
-    .positive();
+/** `key` is the shared message key used both when the reference is missing and when it is not a number. */
+const refId = (key: string) => z.number({ required_error: key, invalid_type_error: key }).int().positive();
 
 export const tagNumber = z
   .string()
   .trim()
   .toUpperCase()
-  .min(1, 'Tag number is required')
-  .max(32, 'Tag number is at most 32 characters')
-  .regex(/^[A-Z0-9][A-Z0-9\-_/.]*$/, 'Use letters, digits and - _ / . only');
+  .min(1, 'validation.tag.required')
+  .max(32, 'validation.tag.max')
+  .regex(/^[A-Z0-9][A-Z0-9\-_/.]*$/, 'validation.tag.chars');
 
 export const productionCode = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^[A-Z0-9][A-Z0-9-]{2,31}$/, 'Use 3–32 letters, digits or dashes');
+  .regex(/^[A-Z0-9][A-Z0-9-]{2,31}$/, 'validation.code.format');
 
 const baseFields = {
   tagNumber,
   productionDate: isoDate,
-  mineralTypeId: refId('Mineral type'),
+  mineralTypeId: refId('validation.reference.mineralTypeId'),
   weightKg: weightKgValue,
-  businessLocationId: refId('Business location'),
-  traceabilityAgentId: refId('Traceability agent'),
-  companyId: refId('Company'),
-  operatorRepresentative: z.string().trim().min(2, 'Enter the representative’s name').max(120),
+  businessLocationId: refId('validation.reference.businessLocationId'),
+  traceabilityAgentId: refId('validation.reference.traceabilityAgentId'),
+  companyId: refId('validation.reference.companyId'),
+  operatorRepresentative: z.string().trim().min(2, 'validation.representative').max(120),
 };
 
 export const createProductionInput = z.object({ productionCode: productionCode.optional(), ...baseFields });
@@ -51,7 +48,7 @@ export const updateProductionInput = z.object({
   productionCode,
   ...baseFields,
   version: z.number().int().positive(),
-  reason: z.string().trim().min(5, 'Explain the change in at least 5 characters').max(500).optional(),
+  reason: z.string().trim().min(5, 'validation.reason.min').max(500).optional(),
 });
 export type UpdateProductionInput = z.infer<typeof updateProductionInput>;
 
@@ -132,7 +129,13 @@ export const verifyResult = z.object({
   status: z.enum(['intact', 'tampered']),
   eventsChecked: z.number().int(),
   failure: z
-    .object({ seq: z.number().int().nullable(), reason: z.enum(VERIFY_FAILURES), message: z.string() })
+    .object({
+      seq: z.number().int().nullable(),
+      reason: z.enum(VERIFY_FAILURES),
+      /** English text; screens translate from `reason` and `params`. */
+      message: z.string(),
+      params: z.record(z.union([z.string(), z.number()])).optional(),
+    })
     .optional(),
 });
 export type VerifyResult = z.infer<typeof verifyResult>;

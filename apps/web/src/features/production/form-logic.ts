@@ -9,11 +9,12 @@ import {
   type ReferenceItem,
 } from '@cr/contracts';
 
+/** Message keys for the four audited fields (`production.fieldsInline.*` holds the in-sentence form). */
 export const CRITICAL_LABELS: Record<CriticalField, string> = {
-  productionCode: 'Production ID',
-  tagNumber: 'Tag number',
-  weightKg: 'Production weight',
-  mineralTypeId: 'Mineral type',
+  productionCode: 'production.fields.productionCode',
+  tagNumber: 'production.fields.tagNumber',
+  weightKg: 'production.fields.weightKg',
+  mineralTypeId: 'production.fields.mineralTypeId',
 };
 
 export type ProductionFormValues = {
@@ -72,7 +73,7 @@ export function productionFormSchema(original?: ProductionRecord, today = busine
     productionCode: original ? productionCode : z.string().optional(),
     productionDate: createProductionInput.shape.productionDate.refine(
       (d) => d <= today,
-      'Production date cannot be in the future.',
+      'validation.date.future',
     ),
     reason: z.string().trim().max(500).optional(),
   });
@@ -86,7 +87,7 @@ export function productionFormSchema(original?: ProductionRecord, today = busine
       ctx.addIssue({
         code: 'custom',
         path: ['reason'],
-        message: 'Explain why these values changed (at least 5 characters).',
+        message: 'production.form.reasonRequired',
       });
     }
   });
@@ -96,10 +97,11 @@ export function productionFormSchema(original?: ProductionRecord, today = busine
 export function optionsWithCurrent(
   items: ReferenceItem[] | undefined,
   current?: { id: number; name: string },
+  retiredLabel: (name: string) => string = (name) => `${name} (retired)`,
 ) {
   const options = (items ?? []).map((i) => ({ value: i.id, label: i.name, hint: i.code }));
   if (current && !options.some((o) => o.value === current.id)) {
-    options.push({ value: current.id, label: `${current.name} (retired)`, hint: null });
+    options.push({ value: current.id, label: retiredLabel(current.name), hint: null });
   }
   return options;
 }

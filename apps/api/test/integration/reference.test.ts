@@ -82,4 +82,39 @@ describe('reference data', () => {
       (await request(t.app, operator, { method: 'GET', url: '/api/reference/planets' })).statusCode,
     ).toBe(422);
   });
+  it('shows administrators how many records use each entry, and logs changes', async () => {
+    const res = await request(t.app, admin, {
+      method: 'GET',
+      url: '/api/reference/companies?includeInactive=true',
+    });
+    expect(res.json()[0]).toHaveProperty('usageCount');
+    const plain = await request(t.app, operator, { method: 'GET', url: '/api/reference/companies' });
+    expect(plain.json()[0].usageCount).toBe(0); // only counted for administrators
+    const created = (
+      await request(t.app, admin, {
+        method: 'POST',
+        url: '/api/reference/agents',
+        payload: { name: 'Logged Agent' },
+      })
+    ).json();
+    await request(t.app, admin, {
+      method: 'PATCH',
+      url: `/api/reference/agents/${created.id}`,
+      payload: { active: false },
+    });
+    const log = (
+      await request(t.app, admin, {
+        method: 'GET',
+        url: '/api/admin/activity?targetType=reference&pageSize=50',
+      })
+    ).json();
+    expect(log.items.map((e: { action: string }) => e.action)).toEqual(
+      expect.arrayContaining(['reference.created', 'reference.retired']),
+    );
+    const retired = log.items.find(
+      (e: { action: string; targetId: number }) => e.action === 'reference.retired',
+    );
+    expect(retired).toMatchObject({ before: { active: true }, after: { active: false } });
+    expect(retired.targetLabel).toMatch(/Logged Agent/);
+  });
 });

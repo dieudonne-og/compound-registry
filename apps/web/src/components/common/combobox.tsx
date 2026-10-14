@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/i18n';
 import { useState } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ export function Combobox({
   loading,
   ...aria
 }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
   return (
@@ -53,15 +55,17 @@ export function Combobox({
           disabled={disabled || loading}
           className={cn('w-full justify-between font-normal', !selected && 'text-muted-foreground')}
         >
-          <span className="truncate">{loading ? 'Loading…' : selected ? selected.label : placeholder}</span>
+          <span className="truncate">
+            {loading ? t('common.loading') : selected ? selected.label : placeholder}
+          </span>
           <ChevronsUpDown className="size-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Search…" />
+          <CommandInput placeholder={t('common.searchShort')} />
           <CommandList>
-            <CommandEmpty>No match.</CommandEmpty>
+            <CommandEmpty>{t('common.noMatch')}</CommandEmpty>
             <CommandGroup>
               {options.map((o) => (
                 <CommandItem

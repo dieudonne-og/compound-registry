@@ -13,6 +13,7 @@ export const ACTIONS = [
   'audit:read',
   'audit:verify',
   'reference:manage',
+  'admin:manage',
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -32,6 +33,7 @@ const MATRIX: Record<Action, readonly Role[]> = {
   'audit:read': ['admin', 'supervisor', 'auditor'],
   'audit:verify': ['admin', 'supervisor', 'auditor'],
   'reference:manage': ['admin'],
+  'admin:manage': ['admin'],
 };
 
 /**

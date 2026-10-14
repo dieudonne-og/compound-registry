@@ -1,5 +1,7 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
+import { Link } from 'react-router';
 import { useSession, useSignOut } from '@/features/auth/session';
+import { useT } from '@/i18n/i18n';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +17,7 @@ import {
 export function UserMenu() {
   const { user } = useSession();
   const signOut = useSignOut();
+  const t = useT();
   if (!user) return null;
   const initials = user.name
     .split(' ')
@@ -24,7 +27,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-9 gap-2 px-1.5 sm:px-2" aria-label="Account menu">
+        <Button variant="ghost" className="h-9 gap-2 px-1.5 sm:px-2" aria-label={t('layout.account')}>
           <Avatar className="size-7">
             <AvatarFallback className="bg-accent text-xs text-accent-foreground">{initials}</AvatarFallback>
           </Avatar>
@@ -35,13 +38,16 @@ export function UserMenu() {
         <DropdownMenuLabel className="space-y-1">
           <p className="font-medium">{user.name}</p>
           <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>
-          <Badge variant="secondary" className="capitalize">
-            {user.role}
-          </Badge>
+          <Badge variant="secondary">{t(`roles.${user.role}`)}</Badge>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/settings">
+            <Settings /> {t('layout.settings')}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => signOut.mutate()}>
-          <LogOut /> Sign out
+          <LogOut /> {t('layout.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

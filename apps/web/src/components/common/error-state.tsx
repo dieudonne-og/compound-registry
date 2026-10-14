@@ -1,8 +1,10 @@
+import { useT } from '@/i18n/i18n';
 import { AlertTriangle, RotateCw } from 'lucide-react';
 import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const t = useT();
   const api = error instanceof ApiError ? error : null;
   return (
     <div
@@ -11,15 +13,15 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
     >
       <AlertTriangle className="size-6 text-destructive" />
       <div className="space-y-1">
-        <p className="font-medium">{api?.status === 404 ? 'Not found' : 'This could not be loaded'}</p>
-        <p className="text-sm text-muted-foreground">
-          {api?.message ?? 'Something went wrong. Please try again.'}
-        </p>
-        {api?.requestId && <p className="num text-xs text-muted-foreground">Reference {api.requestId}</p>}
+        <p className="font-medium">{api?.status === 404 ? t('common.notFound') : t('common.loadFailed')}</p>
+        <p className="text-sm text-muted-foreground">{t(api?.message ?? 'common.unknownError')}</p>
+        {api?.requestId && (
+          <p className="num text-xs text-muted-foreground">{t('common.reference', { id: api.requestId })}</p>
+        )}
       </div>
       {onRetry && api?.status !== 404 && (
         <Button variant="outline" size="sm" onClick={onRetry}>
-          <RotateCw /> Try again
+          <RotateCw /> {t('common.retry')}
         </Button>
       )}
     </div>
