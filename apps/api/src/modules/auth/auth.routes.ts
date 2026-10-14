@@ -1,9 +1,16 @@
 import type { FastifyReply } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { errorBody, loginInput, sessionUser, type SessionUser } from '@cr/contracts';
+import {
+  changePasswordInput,
+  errorBody,
+  loginInput,
+  meResponse,
+  sessionUser,
+  type SessionUser,
+} from '@cr/contracts';
 import { AppError } from '../../shared/errors';
-import { createAuthService } from './auth.service';
+import { createAuthService, sha256 } from './auth.service';
 import { newCsrfToken } from './csrf';
 
 export const authRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -48,8 +55,10 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (request, reply) => {
-      const user = await auth.login(request.body.email, request.body.password);
-      if (!user) throw new AppError('INVALID_CREDENTIALS', 401, 'Email or password is incorrect.');
+      const result = await auth.login(request.body.email, request.body.password);
+      if (!result) throw new AppError('INVALID_CREDENTIALS', 401, 'errors.INVALID_CREDENTIALS');
+      if ('disabled' in result) throw new AppError('ACCOUNT_DISABLED', 401, 'errors.ACCOUNT_DISABLED');
+      const { user } = result;
       const { token } = await auth.issueRefreshToken(user.id);
       await startSession(reply, user, token);
       return { user };
@@ -63,7 +72,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       const rotated = request.cookies.refresh_token ? await auth.rotate(request.cookies.refresh_token) : null;
       if (!rotated) {
         clearSession(reply);
-        throw new AppError('UNAUTHENTICATED', 401, 'Your session has ended. Please sign in again.');
+        throw new AppError('UNAUTHENTICATED', 401, 'errors.sessionEnded');
       }
       await startSession(reply, rotated.user, rotated.token);
       return { user: rotated.user };
@@ -79,8 +88,30 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     '/me',
     {
       preHandler: app.authenticate,
-      schema: { tags: ['auth'], response: { 200: z.object({ user: sessionUser }) } },
+      schema: { tags: ['auth'], response: { 200: meResponse } },
     },
-    async (request) => ({ user: request.user }),
+    async (request) => ({
+      user: request.user,
+      mustChangePassword: request.account!.mustChangePassword,
+      preferences: request.account!.preferences,
+    }),
+  );
+
+  app.post(
+    '/change-password',
+    {
+      preHandler: app.authenticate,
+      schema: { tags: ['auth'], body: changePasswordInput },
+    },
+    async (request, reply) => {
+      const keep = request.cookies.refresh_token ? sha256(request.cookies.refresh_token) : undefined;
+      await auth.changePassword(
+        request.user.id,
+        request.body.currentPassword,
+        request.body.newPassword,
+        keep,
+      );
+      return reply.status(204).send();
+    },
   );
 };

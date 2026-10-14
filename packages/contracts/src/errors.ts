@@ -21,6 +21,12 @@ export const ERROR_CODES = [
   'UNSUPPORTED_FILE_TYPE',
   'RATE_LIMITED',
   'INTERNAL_ERROR',
+  'LAST_ADMIN',
+  'SELF_CHANGE_NOT_ALLOWED',
+  'EMAIL_TAKEN',
+  'WRONG_PASSWORD',
+  'PASSWORD_CHANGE_REQUIRED',
+  'ACCOUNT_DISABLED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

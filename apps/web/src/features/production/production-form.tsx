@@ -1,3 +1,5 @@
+import { InfoTip } from '@/features/help/info-tip';
+import { useFormat, useT } from '@/i18n/i18n';
 import { useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -8,7 +10,6 @@ import { History, Loader2, Lock } from 'lucide-react';
 import type { ProductionRecord } from '@cr/contracts';
 import { ApiError } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
-import { formatKg } from '@/lib/format';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -33,7 +34,6 @@ import { useCan } from '@/features/auth/session';
 import { useReference, useSaveProduction } from './api';
 import {
   changedCriticalFields,
-  CRITICAL_LABELS,
   optionsWithCurrent,
   productionFormSchema,
   toFormValues,
@@ -54,6 +54,9 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
   const client = useQueryClient();
   const can = useCan();
   const save = useSaveProduction();
+  const t = useT();
+  const format = useFormat();
+  const retired = (name: string) => t('production.form.retired', { name });
   const idempotencyKey = useRef(crypto.randomUUID());
   const leaving = useRef(false); // set before navigating after a save, so the unsaved-changes guard stays quiet
   const [conflict, setConflict] = useState(false);
@@ -99,14 +102,18 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
           leaving.current = true;
           idempotencyKey.current = crypto.randomUUID();
           form.reset(toFormValues(record));
-          toast.success(original ? 'Changes saved' : `Registered ${record.productionCode}`);
+          toast.success(
+            original
+              ? t('production.form.savedToast')
+              : t('production.form.registeredToast', { code: record.productionCode }),
+          );
           navigate(`/production/${record.id}`);
         },
         onError: (err) => {
           if (err instanceof ApiError && err.code === 'VERSION_CONFLICT') return setConflict(true);
           if (err instanceof ApiError && err.code === 'REQUEST_IN_PROGRESS') return; // a double-click; the first submit is still running
           if (!applyServerErrors(err, form.setError))
-            toast.error(err instanceof ApiError ? err.message : 'Saving failed. Please try again.');
+            toast.error(err instanceof ApiError ? t(err.message) : t('production.form.saveFailed'));
         },
       },
     ),
@@ -123,19 +130,20 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Identification</CardTitle>
+            <CardTitle className="text-base">{t('production.form.identification')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
             <FormField
-              label="Production ID"
+              label={t('production.fields.productionCode')}
+              tip={<InfoTip textKey="help.tips.productionId" />}
               htmlFor="productionCode"
               error={err('productionCode')}
               hint={
                 original
                   ? codeEditable
-                    ? 'Changing the ID is recorded in the history.'
-                    : 'Only administrators can change the ID.'
-                  : 'Generated automatically when you save.'
+                    ? t('production.form.codeHistory')
+                    : t('production.form.codeAdmin')
+                  : t('production.form.codeGenerated')
               }
             >
               <div className="flex items-center gap-2">
@@ -147,12 +155,15 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
                   {...register('productionCode')}
                   {...aria('productionCode')}
                 />
-                {original && !codeEditable && (
-                  <LockHint text="Only administrators can change the production ID" />
-                )}
+                {original && !codeEditable && <LockHint text={t('production.form.codeLocked')} />}
               </div>
             </FormField>
-            <FormField label="Tag number" htmlFor="tagNumber" required error={err('tagNumber')}>
+            <FormField
+              label={t('production.fields.tagNumber')}
+              htmlFor="tagNumber"
+              required
+              error={err('tagNumber')}
+            >
               <div className="flex items-center gap-2">
                 <Input
                   id="tagNumber"
@@ -162,7 +173,7 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
                   {...register('tagNumber')}
                   {...aria('tagNumber')}
                 />
-                {criticalLocked && <LockHint text="Only supervisors and administrators can change this" />}
+                {criticalLocked && <LockHint text={t('production.form.criticalLocked')} />}
               </div>
             </FormField>
           </CardContent>
@@ -170,11 +181,11 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Production</CardTitle>
+            <CardTitle className="text-base">{t('production.form.production')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
             <FormField
-              label="Production date"
+              label={t('production.form.productionDate')}
               htmlFor="productionDate"
               required
               error={err('productionDate')}
@@ -194,18 +205,23 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
                 )}
               />
             </FormField>
-            <FormField label="Mineral type" htmlFor="mineralTypeId" required error={err('mineralTypeId')}>
+            <FormField
+              label={t('production.fields.mineralTypeId')}
+              htmlFor="mineralTypeId"
+              required
+              error={err('mineralTypeId')}
+            >
               <Controller
                 control={control}
                 name="mineralTypeId"
                 render={({ field }) => (
                   <Combobox
                     id="mineralTypeId"
-                    options={optionsWithCurrent(refs.minerals.data, original?.mineralType)}
+                    options={optionsWithCurrent(refs.minerals.data, original?.mineralType, retired)}
                     loading={refs.minerals.isLoading}
                     value={field.value}
                     onChange={field.onChange}
-                    placeholder="Select mineral"
+                    placeholder={t('production.form.selectMineral')}
                     disabled={criticalLocked}
                     invalid={!!errors.mineralTypeId}
                     aria-describedby="mineralTypeId-error"
@@ -214,11 +230,11 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
               />
             </FormField>
             <FormField
-              label="Production weight"
+              label={t('production.fields.weightKg')}
               htmlFor="weightKg"
               required
               error={err('weightKg')}
-              hint="Greater than zero, up to 3 decimals."
+              hint={t('production.form.weightHint')}
             >
               <div className="relative">
                 <Input
@@ -239,28 +255,33 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Parties</CardTitle>
+            <CardTitle className="text-base">{t('production.form.parties')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
             {(
               [
-                ['companyId', 'Company', refs.companies, original?.company],
-                ['businessLocationId', 'Business location', refs.locations, original?.businessLocation],
-                ['traceabilityAgentId', 'Traceability agent', refs.agents, original?.traceabilityAgent],
+                ['companyId', 'production.form.company', refs.companies, original?.company],
+                [
+                  'businessLocationId',
+                  'production.form.location',
+                  refs.locations,
+                  original?.businessLocation,
+                ],
+                ['traceabilityAgentId', 'production.form.agent', refs.agents, original?.traceabilityAgent],
               ] as const
             ).map(([name, label, ref, current]) => (
-              <FormField key={name} label={label} htmlFor={name} required error={err(name)}>
+              <FormField key={name} label={t(label)} htmlFor={name} required error={err(name)}>
                 <Controller
                   control={control}
                   name={name}
                   render={({ field }) => (
                     <Combobox
                       id={name}
-                      options={optionsWithCurrent(ref.data, current)}
+                      options={optionsWithCurrent(ref.data, current, retired)}
                       loading={ref.isLoading}
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder={`Select ${label.toLowerCase()}`}
+                      placeholder={t(`production.form.select.${name}`)}
                       invalid={!!errors[name]}
                       aria-describedby={`${name}-error`}
                     />
@@ -269,7 +290,7 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
               </FormField>
             ))}
             <FormField
-              label="Operator representative"
+              label={t('production.form.representative')}
               htmlFor="operatorRepresentative"
               required
               error={err('operatorRepresentative')}
@@ -287,20 +308,25 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
         {critical.length > 0 && (
           <Alert className="border-warning-border bg-warning-surface">
             <History className="text-warning" />
-            <AlertTitle className="text-warning">
-              This change will be recorded in the tamper-evident history
-            </AlertTitle>
+            <AlertTitle className="text-warning">{t('production.form.recordedTitle')}</AlertTitle>
             <AlertDescription className="w-full space-y-3 text-foreground/80">
               <p>
-                Changing {critical.map((f) => CRITICAL_LABELS[f]).join(', ')} needs a reason that auditors
-                will see.
+                {t('production.form.recordedBody', {
+                  fields: critical.map((f) => t(`production.fieldsInline.${f}`)).join(', '),
+                })}
               </p>
-              <FormField label="Reason for change" htmlFor="reason" required error={err('reason')}>
+              <FormField
+                label={t('production.form.reason')}
+                tip={<InfoTip textKey="help.tips.reason" />}
+                htmlFor="reason"
+                required
+                error={err('reason')}
+              >
                 <Textarea
                   id="reason"
                   rows={3}
                   maxLength={500}
-                  placeholder="e.g. Re-weighed on the certified warehouse scale"
+                  placeholder={t('production.form.reasonPlaceholder')}
                   className="bg-background"
                   {...register('reason')}
                   {...aria('reason')}
@@ -314,30 +340,35 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
       <aside className="lg:sticky lg:top-20 lg:self-start">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{original ? 'Save changes' : 'Register production'}</CardTitle>
+            <CardTitle className="text-base">
+              {original ? t('production.form.saveChanges') : t('production.form.register')}
+            </CardTitle>
             <CardDescription>
-              {original ? `Editing version ${original.version}.` : 'Check the details before saving.'}
+              {original
+                ? t('production.form.editingVersion', { version: original.version })
+                : t('production.form.checkDetails')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <dl className="space-y-2">
               <div className="flex justify-between gap-2">
-                <dt className="text-muted-foreground">Tag</dt>
+                <dt className="text-muted-foreground">{t('production.form.tag')}</dt>
                 <dd className="num">{values.tagNumber?.toUpperCase() || '—'}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-muted-foreground">Weight</dt>
+                <dt className="text-muted-foreground">{t('production.form.weight')}</dt>
                 <dd className="num">
-                  {/^\d+(\.\d+)?$/.test(values.weightKg ?? '') ? formatKg(values.weightKg) : '—'}
+                  {/^\d+(\.\d+)?$/.test(values.weightKg ?? '') ? format.kg(values.weightKg) : '—'}
                 </dd>
               </div>
             </dl>
             <div className="fixed inset-x-0 bottom-0 z-20 flex gap-2 border-t bg-background/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0">
               <Button type="button" variant="outline" className="flex-1" onClick={() => navigate(-1)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" className="flex-1" disabled={save.isPending}>
-                {save.isPending && <Loader2 className="animate-spin" />} {original ? 'Save' : 'Register'}
+                {save.isPending && <Loader2 className="animate-spin" />}{' '}
+                {original ? t('production.form.save') : t('production.form.registerShort')}
               </Button>
             </div>
           </CardContent>
@@ -347,10 +378,8 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
       <AlertDialog open={conflict}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>This record was changed by someone else</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your changes were not saved. Load the latest version, then make your changes again.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('production.form.conflict.title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('production.form.conflict.body')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
@@ -360,7 +389,7 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
                 void client.invalidateQueries({ queryKey: ['production', original?.id] });
               }}
             >
-              Load latest version
+              {t('production.form.conflict.load')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -369,12 +398,16 @@ export function ProductionForm({ original }: { original?: ProductionRecord }) {
       <AlertDialog open={blocker.state === 'blocked'}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
-            <AlertDialogDescription>You have changes that have not been saved.</AlertDialogDescription>
+            <AlertDialogTitle>{t('production.form.discard.title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('production.form.discard.body')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>Keep editing</AlertDialogCancel>
-            <AlertDialogAction onClick={() => blocker.proceed?.()}>Discard</AlertDialogAction>
+            <AlertDialogCancel onClick={() => blocker.reset?.()}>
+              {t('production.form.discard.keep')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => blocker.proceed?.()}>
+              {t('production.form.discard.discard')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

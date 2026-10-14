@@ -30,15 +30,21 @@ export function toApiError(status: number, body: unknown): ApiError {
   return new ApiError(
     status,
     e?.code ?? 'INTERNAL_ERROR',
-    e?.message ?? 'Something went wrong. Please try again.',
+    e?.message ?? 'common.unknownError', // a message key; screens show messages through t()
     e?.details,
     e?.requestId,
   );
 }
 
-const networkError = () =>
-  new ApiError(0, 'NETWORK_ERROR', 'Cannot reach the server. Check your connection and try again.');
+const networkError = () => new ApiError(0, 'NETWORK_ERROR', 'common.networkError');
 const NO_REFRESH = ['/auth/login', '/auth/refresh', '/auth/logout'];
+
+let requestLanguage = 'en';
+/** The interface language, sent as Accept-Language so the server answers in it. */
+export const setRequestLanguage = (language: string) => {
+  requestLanguage = language;
+};
+export const getRequestLanguage = () => requestLanguage;
 
 let refreshing: Promise<boolean> | null = null;
 
@@ -47,7 +53,7 @@ export function refreshSession(): Promise<boolean> {
   refreshing ??= fetch('/api/auth/refresh', {
     method: 'POST',
     credentials: 'include',
-    headers: { 'x-csrf-token': csrfToken() },
+    headers: { 'x-csrf-token': csrfToken(), 'accept-language': requestLanguage },
   })
     .then((r) => r.ok)
     .catch(() => false)
@@ -66,6 +72,7 @@ export async function api<T>(
   const method = (rest.method ?? 'GET').toUpperCase();
   const headers = new Headers(rest.headers);
   if (json !== undefined) headers.set('content-type', 'application/json');
+  headers.set('accept-language', requestLanguage);
   if (method !== 'GET' && method !== 'HEAD') headers.set('x-csrf-token', csrfToken());
 
   let res: Response;

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, Factory, Plus, Search, X } from 'lucide-react';
 import type { ProductionRecord, ReferenceKind } from '@cr/contracts';
-import { formatDate, formatDateTime, formatKg } from '@/lib/format';
+import { useFormat, useT } from '@/i18n/i18n';
 import { downloadWithSession } from '@/lib/api';
 import { useDebouncedValue } from '@/lib/use-debounced';
 import { Badge } from '@/components/ui/badge';
@@ -15,10 +15,8 @@ import { DatePicker } from '@/components/common/date-picker';
 import { EmptyState } from '@/components/common/empty-state';
 import { ErrorState } from '@/components/common/error-state';
 import { PageHeader } from '@/components/common/page-header';
-import { useCan } from '@/features/auth/session';
+import { useCan, usePreferences } from '@/features/auth/session';
 import { toQueryString, useProductionList, useReference } from './api';
-
-const PAGE_SIZE = 20;
 
 function SortHeader({
   label,
@@ -33,13 +31,14 @@ function SortHeader({
 }) {
   const active = sort.replace('-', '') === field;
   const desc = sort.startsWith('-');
+  const t = useT();
   const Icon = !active ? ArrowUpDown : desc ? ArrowDown : ArrowUp;
   return (
     <button
       type="button"
       className="inline-flex items-center gap-1 hover:text-foreground"
       onClick={() => onSort(active && !desc ? `-${field}` : field)}
-      aria-label={`Sort by ${label}`}
+      aria-label={t('production.list.sortBy', { label })}
     >
       {label}
       <Icon className="size-3.5" />
@@ -51,12 +50,14 @@ function RefFilter({
   kind,
   param,
   label,
+  allLabel,
   params,
   set,
 }: {
   kind: ReferenceKind;
   param: string;
   label: string;
+  allLabel: string;
   params: URLSearchParams;
   set: (p: Record<string, string | undefined>) => void;
 }) {
@@ -70,7 +71,7 @@ function RefFilter({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All {label.toLowerCase()}</SelectItem>
+        <SelectItem value="all">{allLabel}</SelectItem>
         {data?.map((i) => (
           <SelectItem key={i.id} value={String(i.id)}>
             {i.name}
@@ -85,6 +86,9 @@ export function Component() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const can = useCan();
+  const t = useT();
+  const format = useFormat();
+  const pageSize = usePreferences().preferences.pageSize;
   const [search, setSearch] = useState(params.get('q') ?? '');
   const debounced = useDebouncedValue(search.trim(), 300);
   const sort = params.get('sort') ?? '-createdAt';
@@ -125,7 +129,7 @@ export function Component() {
     to: params.get('to') ?? undefined,
     sort,
   };
-  const query = useProductionList({ ...filters, page, pageSize: PAGE_SIZE });
+  const query = useProductionList({ ...filters, page, pageSize });
   const filtered = Object.entries(filters).some(([k, v]) => k !== 'sort' && v);
 
   const ariaSortFor = (field: string) =>
@@ -133,41 +137,58 @@ export function Component() {
 
   const columns: ColumnDef<ProductionRecord, unknown>[] = [
     {
-      header: 'Production ID',
+      header: t('production.list.columns.productionId'),
       cell: ({ row }) => <span className="num font-medium">{row.original.productionCode}</span>,
     },
     {
       id: 'tag',
       meta: { ariaSort: ariaSortFor('tagNumber') },
-      header: () => <SortHeader label="Tag" field="tagNumber" sort={sort} onSort={(s) => set({ sort: s })} />,
+      header: () => (
+        <SortHeader
+          label={t('production.list.columns.tag')}
+          field="tagNumber"
+          sort={sort}
+          onSort={(s) => set({ sort: s })}
+        />
+      ),
       cell: ({ row }) => <span className="num">{row.original.tagNumber}</span>,
     },
     {
       id: 'date',
       meta: { ariaSort: ariaSortFor('productionDate') },
       header: () => (
-        <SortHeader label="Date" field="productionDate" sort={sort} onSort={(s) => set({ sort: s })} />
+        <SortHeader
+          label={t('production.list.columns.date')}
+          field="productionDate"
+          sort={sort}
+          onSort={(s) => set({ sort: s })}
+        />
       ),
-      cell: ({ row }) => formatDate(row.original.productionDate),
+      cell: ({ row }) => format.date(row.original.productionDate),
     },
     {
-      header: 'Mineral',
+      header: t('production.list.columns.mineral'),
       cell: ({ row }) => <Badge variant="secondary">{row.original.mineralType.name}</Badge>,
     },
     {
       id: 'weight',
       meta: { className: 'text-right', ariaSort: ariaSortFor('weightKg') },
       header: () => (
-        <SortHeader label="Weight" field="weightKg" sort={sort} onSort={(s) => set({ sort: s })} />
+        <SortHeader
+          label={t('production.list.columns.weight')}
+          field="weightKg"
+          sort={sort}
+          onSort={(s) => set({ sort: s })}
+        />
       ),
-      cell: ({ row }) => <span className="num">{formatKg(row.original.weightKg)}</span>,
+      cell: ({ row }) => <span className="num">{format.kg(row.original.weightKg)}</span>,
     },
     {
-      header: 'Company',
+      header: t('production.list.columns.company'),
       cell: ({ row }) => <span className="block max-w-44 truncate">{row.original.company.name}</span>,
     },
     {
-      header: 'Location',
+      header: t('production.list.columns.location'),
       cell: ({ row }) => (
         <span className="block max-w-40 truncate">{row.original.businessLocation.name}</span>
       ),
@@ -176,10 +197,15 @@ export function Component() {
       id: 'updated',
       meta: { ariaSort: ariaSortFor('createdAt') },
       header: () => (
-        <SortHeader label="Created" field="createdAt" sort={sort} onSort={(s) => set({ sort: s })} />
+        <SortHeader
+          label={t('production.list.columns.created')}
+          field="createdAt"
+          sort={sort}
+          onSort={(s) => set({ sort: s })}
+        />
       ),
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{formatDateTime(row.original.createdAt)}</span>
+        <span className="text-muted-foreground">{format.dateTime(row.original.createdAt)}</span>
       ),
     },
   ];
@@ -187,8 +213,8 @@ export function Component() {
   return (
     <>
       <PageHeader
-        title="Production records"
-        description="Search, filter and export registered production."
+        title={t('production.list.title')}
+        description={t('production.list.description')}
         actions={
           <>
             <Button variant="outline" asChild>
@@ -200,13 +226,13 @@ export function Component() {
                   void downloadWithSession(`/api/production/export.csv?${toQueryString(filters)}`);
                 }}
               >
-                <Download /> Export CSV
+                <Download /> {t('production.list.export')}
               </a>
             </Button>
             {can('production:create') && (
               <Button asChild>
                 <Link to="/production/new">
-                  <Plus /> Register production
+                  <Plus /> {t('production.list.register')}
                 </Link>
               </Button>
             )}
@@ -220,23 +246,44 @@ export function Component() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Production ID or tag number"
+            placeholder={t('production.list.search')}
             className="pl-9"
-            aria-label="Search production ID or tag number"
+            aria-label={t('production.list.searchLabel')}
           />
         </div>
-        <RefFilter kind="mineral-types" param="mineralTypeId" label="Minerals" params={params} set={set} />
-        <RefFilter kind="companies" param="companyId" label="Companies" params={params} set={set} />
-        <RefFilter kind="locations" param="locationId" label="Locations" params={params} set={set} />
+        <RefFilter
+          kind="mineral-types"
+          param="mineralTypeId"
+          label={t('production.list.filters.minerals')}
+          allLabel={t('production.list.filters.allMinerals')}
+          params={params}
+          set={set}
+        />
+        <RefFilter
+          kind="companies"
+          param="companyId"
+          label={t('production.list.filters.companies')}
+          allLabel={t('production.list.filters.allCompanies')}
+          params={params}
+          set={set}
+        />
+        <RefFilter
+          kind="locations"
+          param="locationId"
+          label={t('production.list.filters.locations')}
+          allLabel={t('production.list.filters.allLocations')}
+          params={params}
+          set={set}
+        />
         <DatePicker
           value={params.get('from') ?? undefined}
           onChange={(v) => set({ from: v })}
-          placeholder="From date"
+          placeholder={t('production.list.from')}
         />
         <DatePicker
           value={params.get('to') ?? undefined}
           onChange={(v) => set({ to: v })}
-          placeholder="To date"
+          placeholder={t('production.list.to')}
         />
         {filtered && (
           <Button
@@ -246,7 +293,7 @@ export function Component() {
               setParams({}, { replace: true });
             }}
           >
-            <X /> Clear filters
+            <X /> {t('production.list.clear')}
           </Button>
         )}
       </div>
@@ -259,26 +306,22 @@ export function Component() {
           data={query.data?.items}
           total={query.data?.total ?? 0}
           page={page}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           onPageChange={(p) => set({ page: String(p) })}
           isLoading={query.isLoading}
           onRowClick={(r) => navigate(`/production/${r.id}`)}
-          getRowLabel={(r) => `Open production ${r.productionCode}`}
+          getRowLabel={(r) => t('production.list.rowLabel', { code: r.productionCode })}
           empty={
             <EmptyState
               icon={Factory}
-              title={filtered ? 'No records match these filters' : 'No production registered yet'}
-              description={
-                filtered
-                  ? 'Try a broader search or clear the filters.'
-                  : 'Registered production batches will appear here.'
-              }
+              title={filtered ? t('production.list.emptyFiltered') : t('production.list.empty')}
+              description={filtered ? t('production.list.emptyFilteredHelp') : t('production.list.emptyHelp')}
               action={
                 !filtered &&
                 can('production:create') && (
                   <Button asChild>
                     <Link to="/production/new">
-                      <Plus /> Register production
+                      <Plus /> {t('production.list.register')}
                     </Link>
                   </Button>
                 )
@@ -295,10 +338,10 @@ export function Component() {
                 <Badge variant="secondary">{r.mineralType.code}</Badge>
               </div>
               <p className="num mt-1 text-sm">
-                {r.tagNumber} · {formatKg(r.weightKg)}
+                {r.tagNumber} · {format.kg(r.weightKg)}
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                {formatDate(r.productionDate)} · {r.company.name}
+                {format.date(r.productionDate)} · {r.company.name}
               </p>
             </Link>
           )}

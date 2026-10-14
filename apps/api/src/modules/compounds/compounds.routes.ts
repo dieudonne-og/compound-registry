@@ -10,7 +10,7 @@ import {
   pageOf,
   purchaseId,
 } from '@cr/contracts';
-import { validationError } from '../../shared/errors';
+import { AppError, validationError } from '../../shared/errors';
 import { createCompoundService } from './compounds.service';
 
 const idParams = z.object({ id: z.coerce.number().int().positive() });
@@ -32,12 +32,17 @@ export const compoundRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (request) => {
       const file = await request.file();
-      if (!file) throw validationError({ file: 'Choose a laboratory report to upload.' });
+      if (!file) throw validationError({ file: 'validation.file.required' });
       const field = file.fields.purchaseId;
       const raw = field && !Array.isArray(field) && 'value' in field ? String(field.value) : '';
       const parsed = purchaseId.safeParse(raw);
       if (!parsed.success) throw validationError({ purchaseId: parsed.error.issues[0]!.message });
       const buffer = await file.toBuffer();
+      // toBuffer() only throws if it sees the flag mid-stream; without this check an oversized
+      // upload can slip through cut to the limit and be processed as if it were complete.
+      if (file.file.truncated) {
+        throw new AppError('FILE_TOO_LARGE', 413, 'errors.FILE_TOO_LARGE');
+      }
       return service.extract({
         buffer,
         filename: file.filename,

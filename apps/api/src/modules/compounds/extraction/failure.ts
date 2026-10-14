@@ -1,18 +1,17 @@
 import { AppError } from '../../../shared/errors';
 
-const HINTS = {
-  encrypted: 'This PDF is password-protected. Upload an unprotected copy of the report.',
-  unreadable: 'The file could not be opened. It may be damaged — export or scan it again.',
-  too_many_pages: 'Reports can have at most 10 pages. Upload only the analysis pages.',
-  no_text:
-    'No readable text was found. Upload a sharper scan (300 DPI or more) or a photo taken straight on in good light.',
-  no_compounds:
-    'No compound values were recognised. Check that this is a laboratory analysis report, or upload a sharper scan.',
-  ocr_failed: 'Text recognition failed for this file. Try exporting the report as PDF or PNG.',
-  too_slow: 'Reading this report took too long. Upload only the pages with the analysis results.',
-} as const;
+export const FAILURE_REASONS = [
+  'encrypted',
+  'unreadable',
+  'too_many_pages',
+  'no_text',
+  'no_compounds',
+  'ocr_failed',
+  'too_slow',
+] as const;
 
-export type FailureReason = keyof typeof HINTS;
+export type FailureReason = (typeof FAILURE_REASONS)[number];
 
+/** The message (a hint on what to do next) comes from the shared catalogue `errors.extraction.<reason>`. */
 export const extractionFailed = (reason: FailureReason) =>
-  new AppError('EXTRACTION_FAILED', 422, HINTS[reason], { reason });
+  new AppError('EXTRACTION_FAILED', 422, `errors.extraction.${reason}`, { reason });

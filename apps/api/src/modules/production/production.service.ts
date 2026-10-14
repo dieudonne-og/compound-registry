@@ -27,18 +27,17 @@ type Fields = Omit<CreateProductionInput, 'productionCode'>;
 const GENERATED_CODE = /^PRD-\d{4}-\d{6}$/;
 const reservedCode = () =>
   validationError({
-    productionCode:
-      'This format is reserved for generated IDs. Leave the ID empty to generate one, or use another format.',
+    productionCode: 'validation.code.reserved',
   });
 
 function uniqueViolation(err: unknown): never {
   if (isDuplicate(err, 'uq_production_tag')) {
-    throw new AppError('TAG_NUMBER_TAKEN', 409, 'This tag number is already registered.', {
+    throw new AppError('TAG_NUMBER_TAKEN', 409, 'errors.TAG_NUMBER_TAKEN', {
       field: 'tagNumber',
     });
   }
   if (isDuplicate(err, 'uq_production_code')) {
-    throw new AppError('PRODUCTION_CODE_TAKEN', 409, 'This production ID is already in use.', {
+    throw new AppError('PRODUCTION_CODE_TAKEN', 409, 'errors.PRODUCTION_CODE_TAKEN', {
       field: 'productionCode',
     });
   }
@@ -51,23 +50,22 @@ export function createProductionService({ db, config }: { db: Database; config: 
   /** References must be active, except ones the record already uses and keeps (they may have been retired since). */
   async function validateFields(tx: Tx, input: Fields, current?: typeof production.$inferSelect) {
     const errors: Record<string, string> = {};
-    if (input.productionDate > todayIn(config.APP_TIMEZONE))
-      errors.productionDate = 'Production date cannot be in the future.';
+    if (input.productionDate > todayIn(config.APP_TIMEZONE)) errors.productionDate = 'validation.date.future';
     const checks = [
-      ['mineralTypeId', mineralTypes, input.mineralTypeId, 'Select an active mineral type.'],
+      ['mineralTypeId', mineralTypes, input.mineralTypeId, 'validation.reference.inactiveMineral'],
       [
         'businessLocationId',
         businessLocations,
         input.businessLocationId,
-        'Select an active business location.',
+        'validation.reference.inactiveLocation',
       ],
       [
         'traceabilityAgentId',
         traceabilityAgents,
         input.traceabilityAgentId,
-        'Select an active traceability agent.',
+        'validation.reference.inactiveAgent',
       ],
-      ['companyId', companies, input.companyId, 'Select an active company.'],
+      ['companyId', companies, input.companyId, 'validation.reference.inactiveCompany'],
     ] as const;
     for (const [field, table, id, message] of checks) {
       if (current && current[field] === id) continue;
@@ -82,7 +80,7 @@ export function createProductionService({ db, config }: { db: Database; config: 
 
   async function load(conn: Database | Tx, id: number): Promise<ProductionRecord> {
     const [row] = await selectProduction(conn).where(eq(production.id, id));
-    if (!row) throw notFound('Production record');
+    if (!row) throw notFound('record');
     return toRecord(row);
   }
 
@@ -137,17 +135,12 @@ export function createProductionService({ db, config }: { db: Database; config: 
     async update(id: number, input: UpdateProductionInput, user: SessionUser): Promise<ProductionRecord> {
       return db.transaction(async (tx) => {
         const [row] = await tx.select().from(production).where(eq(production.id, id)).for('update');
-        if (!row) throw notFound('Production record');
+        if (!row) throw notFound('record');
         if (!can(user, 'production:update', { createdBy: row.createdBy })) throw forbidden();
         if (row.version !== input.version) {
-          throw new AppError(
-            'VERSION_CONFLICT',
-            409,
-            'Someone else changed this record while you were editing it.',
-            {
-              currentVersion: row.version,
-            },
-          );
+          throw new AppError('VERSION_CONFLICT', 409, 'errors.VERSION_CONFLICT', {
+            currentVersion: row.version,
+          });
         }
 
         const next = { ...columnsOf(input), productionCode: input.productionCode };
@@ -160,14 +153,9 @@ export function createProductionService({ db, config }: { db: Database; config: 
           throw reservedCode();
         }
         if (changes.length && !input.reason) {
-          throw new AppError(
-            'REASON_REQUIRED',
-            422,
-            'Give a reason for changing the tag number, weight, mineral type or ID.',
-            {
-              fields: { reason: 'A reason is required for this change.' },
-            },
-          );
+          throw new AppError('REASON_REQUIRED', 422, 'errors.REASON_REQUIRED', {
+            fields: { reason: 'validation.reason.required' },
+          });
         }
 
         const nonCriticalChanged =
@@ -265,7 +253,7 @@ export function createProductionService({ db, config }: { db: Database; config: 
     async verify(id: number) {
       return db.transaction(async (tx) => {
         const [row] = await tx.select().from(production).where(eq(production.id, id));
-        if (!row) throw notFound('Production record');
+        if (!row) throw notFound('record');
         return audit.verify(id, snapshotOf(row), tx);
       });
     },

@@ -73,10 +73,11 @@ export function verifyChain(secret: string, events: StoredEvent[], current: Crit
     seq: number | null,
     reason: NonNullable<VerifyResult['failure']>['reason'],
     message: string,
+    params?: Record<string, string | number>,
   ): VerifyResult => ({
     status: 'tampered',
     eventsChecked: checked,
-    failure: { seq, reason, message },
+    failure: { seq, reason, message, ...(params && { params }) },
   });
 
   if (!events.length) return tampered(null, 'NO_EVENTS', 'No audit history exists for this record.');
@@ -93,6 +94,7 @@ export function verifyChain(secret: string, events: StoredEvent[], current: Crit
         event.seq,
         'SEQUENCE_GAP',
         `Event #${i + 1} is missing; the history jumps to #${event.seq}.`,
+        { expected: i + 1, seq: event.seq },
       );
     }
     if (event.prevHash !== prevHash) {
@@ -100,10 +102,13 @@ export function verifyChain(secret: string, events: StoredEvent[], current: Crit
         event.seq,
         'PREV_HASH_MISMATCH',
         `Event #${event.seq} is not linked to the event before it.`,
+        { seq: event.seq },
       );
     }
     if (computeEventHash(secret, event) !== event.hash) {
-      return tampered(event.seq, 'HASH_MISMATCH', `Event #${event.seq} was altered after it was recorded.`);
+      return tampered(event.seq, 'HASH_MISMATCH', `Event #${event.seq} was altered after it was recorded.`, {
+        seq: event.seq,
+      });
     }
     for (const change of event.changes) state[change.field] = change.to;
     prevHash = event.hash;
@@ -116,6 +121,7 @@ export function verifyChain(secret: string, events: StoredEvent[], current: Crit
         'STATE_MISMATCH',
         `The current ${LABELS[field]} (${current[field]}) differs from the audited value (${state[field]}). ` +
           'The record was changed outside the application or recent history was removed.',
+        { field, current: String(current[field]), audited: String(state[field]) },
       );
     }
   }

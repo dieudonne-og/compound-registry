@@ -161,6 +161,7 @@ export function parseLines(lines: TextLine[]): ParseResult {
     warnings.push({
       code: 'TOTAL_EXCEEDS_100',
       message: `The recognised values add up to ${total.toFixed(2)} %. Check for misread digits.`,
+      params: { total: total.toFixed(2) },
     });
   }
   if (fields.length && overallConfidence < 0.7) {

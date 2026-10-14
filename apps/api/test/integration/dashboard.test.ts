@@ -41,4 +41,11 @@ describe('dashboard and docs', () => {
       expect(doc.paths, path).toHaveProperty([path]);
     }
   });
+  it('tells signed-in users which administrator to contact', async () => {
+    const operator = await login(t.app, 'operator');
+    const res = await request(t.app, operator, { method: 'GET', url: '/api/help/contact' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ email: 'admin@example.com' });
+    expect((await t.app.inject({ method: 'GET', url: '/api/help/contact' })).statusCode).toBe(401);
+  });
 });

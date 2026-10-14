@@ -41,6 +41,9 @@ export const users = mysqlTable('users', {
   role: mysqlEnum('role', ROLES).notNull(),
   active: boolean('active').notNull().default(true),
   createdAt: ms('created_at').notNull(),
+  preferences: json('preferences'),
+  mustChangePassword: boolean('must_change_password').notNull().default(false),
+  lastSignInAt: ms('last_sign_in_at'),
 });
 
 export const refreshTokens = mysqlTable('refresh_tokens', {
@@ -129,4 +132,17 @@ export const idempotencyKeys = mysqlTable('idempotency_keys', {
   statusCode: int('status_code'),
   response: json('response'),
   createdAt: ms('created_at').notNull(),
+});
+
+export const adminActivity = mysqlTable('admin_activity', {
+  id: id(),
+  actorId: ref('actor_id').notNull(),
+  actorLabel: varchar('actor_label', { length: 160 }).notNull(),
+  action: varchar('action', { length: 40 }).notNull(),
+  targetType: varchar('target_type', { length: 20 }).notNull(),
+  targetId: ref('target_id').notNull(),
+  targetLabel: varchar('target_label', { length: 190 }).notNull(),
+  before: json('before'),
+  after: json('after'),
+  occurredAt: ms('occurred_at').notNull(),
 });

@@ -8,6 +8,8 @@ export const referenceItem = z.object({
   name: z.string(),
   code: z.string().nullable(),
   active: z.boolean(),
+  /** Production records using this entry; counted only for administrators (`includeInactive=true`), else 0. */
+  usageCount: z.number().int(),
 });
 export type ReferenceItem = z.infer<typeof referenceItem>;
 
@@ -23,4 +25,4 @@ export const referenceInput = z.object({
 export const referencePatch = referenceInput
   .partial()
   .extend({ active: z.boolean().optional() })
-  .refine((patch) => Object.keys(patch).length > 0, 'Provide at least one field to change');
+  .refine((patch) => Object.keys(patch).length > 0, 'validation.reference.nothingToChange');

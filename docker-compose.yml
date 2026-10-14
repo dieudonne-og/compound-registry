@@ -1,5 +1,6 @@
 services:
   db:
+    restart: unless-stopped
     image: mysql:8.4
     command: ['--log-bin-trust-function-creators=1']
     environment:
@@ -24,6 +25,7 @@ services:
       retries: 20
 
   api:
+    restart: unless-stopped
     build: { context: ., dockerfile: docker/api.Dockerfile }
     depends_on: { db: { condition: service_healthy } }
     environment:
@@ -44,6 +46,7 @@ services:
     volumes: [uploads:/data/storage]
 
   web:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: docker/web.Dockerfile

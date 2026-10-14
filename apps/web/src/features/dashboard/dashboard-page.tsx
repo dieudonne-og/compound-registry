@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import type { DashboardSummary } from '@cr/contracts';
 import { api } from '@/lib/api';
-import { formatKg } from '@/lib/format';
+import { useFormat, useT } from '@/i18n/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,32 +26,34 @@ import { WeightByMineralChart } from './weight-by-mineral-chart';
 export function Component() {
   const { user } = useSession();
   const can = useCan();
+  const t = useT();
+  const format = useFormat();
   const { data, error, refetch, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => api<DashboardSummary>('/dashboard/summary'),
     refetchInterval: 60_000,
   });
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const part = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
 
   return (
     <>
       <PageHeader
-        title={`${greeting}, ${user?.name.split(' ')[0] ?? ''}`}
-        description="Production and laboratory activity at a glance."
+        title={t(`dashboard.greeting.${part}`, { name: user?.name.split(' ')[0] ?? '' })}
+        description={t('dashboard.description')}
         actions={
           <>
             {can('compound:extract') && (
               <Button variant="outline" asChild>
                 <Link to="/compounds/upload">
-                  <Upload /> Upload report
+                  <Upload /> {t('dashboard.upload')}
                 </Link>
               </Button>
             )}
             {can('production:create') && (
               <Button asChild>
                 <Link to="/production/new">
-                  <Plus /> Register production
+                  <Plus /> {t('dashboard.register')}
                 </Link>
               </Button>
             )}
@@ -71,27 +73,27 @@ export function Component() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <StatTile
-              label="Records this month"
+              label={t('dashboard.tiles.records')}
               value={data.productionThisMonth}
               icon={Factory}
               href="/production"
             />
             <StatTile
-              label="Weight this month"
-              value={formatKg(data.weightThisMonthKg).replace(' kg', '')}
-              hint="kilograms"
+              label={t('dashboard.tiles.weight')}
+              value={format.kg(data.weightThisMonthKg).replace(/\s?kg$/, '')}
+              hint={t('dashboard.tiles.kilograms')}
               icon={Scale}
             />
             <StatTile
-              label="Lab reports saved"
+              label={t('dashboard.tiles.reports')}
               value={data.reportsProcessed}
               icon={FlaskConical}
               href="/compounds"
             />
             <StatTile
-              label="Awaiting review"
+              label={t('dashboard.tiles.pending')}
               value={data.pendingReviews}
-              hint="uploaded but not yet confirmed"
+              hint={t('dashboard.tiles.pendingHint')}
               icon={ClipboardCheck}
               tone={data.pendingReviews ? 'warning' : 'default'}
             />
@@ -100,14 +102,14 @@ export function Component() {
           <div className="grid items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Production by mineral</CardTitle>
-                <CardDescription>Total registered weight</CardDescription>
+                <CardTitle className="text-base">{t('dashboard.byMineral')}</CardTitle>
+                <CardDescription>{t('dashboard.byMineralHelp')}</CardDescription>
               </CardHeader>
               <CardContent>
                 {data.weightByMineral.length ? (
                   <WeightByMineralChart data={data.weightByMineral} />
                 ) : (
-                  <p className="text-sm text-muted-foreground">No production registered yet.</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard.noProduction')}</p>
                 )}
               </CardContent>
             </Card>
@@ -121,17 +123,14 @@ export function Component() {
                       <ShieldCheck className="size-5 text-success" />
                     )}
                     <div>
-                      <CardTitle className="text-base">Audit trail</CardTitle>
+                      <CardTitle className="text-base">{t('dashboard.audit')}</CardTitle>
                       <CardDescription>
                         {data.chainHealth.tampered ? (
                           <span className="text-destructive">
-                            <span className="num">{data.chainHealth.tampered}</span> record(s) failed
-                            verification
+                            {t('dashboard.tampered', { count: data.chainHealth.tampered })}
                           </span>
                         ) : (
-                          <>
-                            All <span className="num">{data.chainHealth.intact}</span> records verified
-                          </>
+                          t('dashboard.verified', { count: data.chainHealth.intact })
                         )}
                       </CardDescription>
                     </div>
@@ -140,7 +139,7 @@ export function Component() {
               )}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Recent activity</CardTitle>
+                  <CardTitle className="text-base">{t('dashboard.recent')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <RecentActivity items={data.recentActivity} />

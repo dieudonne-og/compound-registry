@@ -1,3 +1,6 @@
+import { useI18n } from '@/i18n/i18n';
+import { formatDate } from '@/lib/format';
+import { enGB, fr } from 'date-fns/locale';
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
@@ -18,15 +21,8 @@ type Props = {
 };
 
 /** Value is a calendar date string (YYYY-MM-DD); no time zone involved. */
-export function DatePicker({
-  id,
-  value,
-  onChange,
-  placeholder = 'Pick a date',
-  disableFuture,
-  invalid,
-  ...aria
-}: Props) {
+export function DatePicker({ id, value, onChange, placeholder, disableFuture, invalid, ...aria }: Props) {
+  const { t, language, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const selected = value ? parseISO(value) : undefined;
   return (
@@ -41,12 +37,13 @@ export function DatePicker({
           className={cn('w-full justify-start font-normal', !value && 'text-muted-foreground')}
         >
           <CalendarIcon className="size-4" />
-          {selected ? format(selected, 'd MMM yyyy') : placeholder}
+          {value ? formatDate(value, locale) : (placeholder ?? t('common.pickDate'))}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
+          locale={language === 'fr' ? fr : enGB}
           selected={selected}
           defaultMonth={selected}
           autoFocus
