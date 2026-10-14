@@ -10,7 +10,7 @@ import {
   pageOf,
   purchaseId,
 } from '@cr/contracts';
-import { validationError } from '../../shared/errors';
+import { AppError, validationError } from '../../shared/errors';
 import { createCompoundService } from './compounds.service';
 
 const idParams = z.object({ id: z.coerce.number().int().positive() });
@@ -38,6 +38,11 @@ export const compoundRoutes: FastifyPluginAsyncZod = async (app) => {
       const parsed = purchaseId.safeParse(raw);
       if (!parsed.success) throw validationError({ purchaseId: parsed.error.issues[0]!.message });
       const buffer = await file.toBuffer();
+      // toBuffer() only throws if it sees the flag mid-stream; without this check an oversized
+      // upload can slip through cut to the limit and be processed as if it were complete.
+      if (file.file.truncated) {
+        throw new AppError('FILE_TOO_LARGE', 413, 'The file is larger than the allowed upload size.');
+      }
       return service.extract({
         buffer,
         filename: file.filename,
