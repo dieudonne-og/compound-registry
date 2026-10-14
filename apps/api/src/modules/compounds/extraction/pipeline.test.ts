@@ -52,3 +52,19 @@ describe('extraction time budget', () => {
     });
   });
 });
+
+describe('documents that are not laboratory reports', () => {
+  it('rejects a text PDF without compound values at once, without text recognition', async () => {
+    const started = Date.now();
+    await expect(
+      extractReport(readFileSync(new URL('not-a-lab-report-text.pdf', dir)), 'application/pdf', 'eng+fra'),
+    ).rejects.toMatchObject({ code: 'EXTRACTION_FAILED', details: { reason: 'no_compounds' } });
+    expect(Date.now() - started).toBeLessThan(5000);
+  });
+
+  it('rejects an image whose recognised text holds no believable values', async () => {
+    await expect(
+      extractReport(readFileSync(new URL('not-a-lab-report-image.png', dir)), 'image/png', 'eng+fra'),
+    ).rejects.toMatchObject({ code: 'EXTRACTION_FAILED', details: { reason: 'no_compounds' } });
+  }, 120_000);
+});
