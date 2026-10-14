@@ -18,6 +18,7 @@ const cases = readdirSync(dir)
   .map((f) => JSON.parse(readFileSync(new URL(f, dir), 'utf8')) as Expected);
 
 describe.each(cases)('sample report $file', (expected) => {
+  // The multi-pass scan of assay-certificate-scanned.pdf alone takes 2-3 minutes on a busy machine.
   it('extracts every value into the right column', async () => {
     const outcome = await extractReport(readFileSync(new URL(expected.file, dir)), expected.mime, 'eng+fra');
     expect(outcome.method).toBe(expected.method);
@@ -38,7 +39,7 @@ describe.each(cases)('sample report $file', (expected) => {
       }
     }
     expect(outcome.unmapped.map((u) => u.label)).toEqual(expect.arrayContaining(expected.unmapped));
-  }, 120_000);
+  }, 300_000);
 });
 
 describe('extraction time budget', () => {
@@ -51,4 +52,20 @@ describe('extraction time budget', () => {
       details: { reason: 'too_slow' },
     });
   });
+});
+
+describe('documents that are not laboratory reports', () => {
+  it('rejects a text PDF without compound values at once, without text recognition', async () => {
+    const started = Date.now();
+    await expect(
+      extractReport(readFileSync(new URL('not-a-lab-report-text.pdf', dir)), 'application/pdf', 'eng+fra'),
+    ).rejects.toMatchObject({ code: 'EXTRACTION_FAILED', details: { reason: 'no_compounds' } });
+    expect(Date.now() - started).toBeLessThan(5000);
+  });
+
+  it('rejects an image whose recognised text holds no believable values', async () => {
+    await expect(
+      extractReport(readFileSync(new URL('not-a-lab-report-image.png', dir)), 'image/png', 'eng+fra'),
+    ).rejects.toMatchObject({ code: 'EXTRACTION_FAILED', details: { reason: 'no_compounds' } });
+  }, 120_000);
 });

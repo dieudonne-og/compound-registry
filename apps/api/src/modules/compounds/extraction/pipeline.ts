@@ -24,6 +24,8 @@ export type ExtractionOutcome = ParseResult & {
 
 const TEXT_LAYER_THRESHOLD = 0.8;
 const STRONG_CONFIDENCE = 0.85;
+/** Below this, a recognised value is indistinguishable from noise (e.g. a stray "Sn 76" in a table). */
+const NOISE_FLOOR = 0.3;
 
 type OcrRun = { lines: TextLine[]; parsed: ParseResult; found: number };
 
@@ -83,7 +85,9 @@ async function ocrBest(image: Buffer, langs: string, opts: ExtractOptions): Prom
     throw extractionFailed('unreadable');
   }
   const extra = await runOcr(alternatives, [6], langs, opts);
-  return votedLines([...runs, ...extra].map((r) => r.parsed));
+  const voted = votedLines([...runs, ...extra].map((r) => r.parsed));
+  // Voting keeps only lines with values; with none, keep what was read so the outcome says why.
+  return voted.length ? voted : best.lines;
 }
 
 export async function extractReport(
@@ -103,7 +107,9 @@ export async function extractReport(
       let written = false;
       for (const [index, text] of texts.entries()) {
         const lines = text.split('\n').map((t) => ({ text: t, confidence: 1 }));
-        if (textQuality(text) >= TEXT_LAYER_THRESHOLD && parseLines(lines).fields.length > 0) {
+        // A clean text layer is the document's real text: use it as is, even when it holds no compounds
+        // (recognising a rendered copy of the same page would only add noise).
+        if (textQuality(text) >= TEXT_LAYER_THRESHOLD) {
           pageLines.push(lines);
           textPages++;
           continue;
@@ -130,7 +136,8 @@ export async function extractReport(
   if (!rawText) throw extractionFailed('no_text');
 
   const result = parseLines(lines);
-  if (!result.fields.length && !result.unmapped.length) throw extractionFailed('no_compounds');
+  const believable = result.unmapped.length > 0 || result.fields.some((f) => f.confidence >= NOISE_FLOOR);
+  if (!believable) throw extractionFailed('no_compounds');
 
   const method = ocrPages === 0 ? 'text-layer' : textPages === 0 ? 'ocr' : 'hybrid';
   return { ...result, method, pages: pageLines.length, rawText };
