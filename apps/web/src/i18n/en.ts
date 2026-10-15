@@ -13,6 +13,7 @@ export const webEn = {
     networkError: 'Cannot reach the server. Check your connection and try again.',
     notFound: 'Not found',
     loadFailed: 'This could not be loaded',
+    forbidden: 'Your role does not allow this page.',
     reference: 'Reference {id}',
     confidence: 'confidence',
     confidenceTip: 'Recognition confidence: {level}',

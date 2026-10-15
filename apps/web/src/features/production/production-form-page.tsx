@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/common/error-state';
 import { PageHeader } from '@/components/common/page-header';
 import { useProduction } from './api';
+import { RequirePermission } from '@/features/auth/require-permission';
 import { ProductionForm } from './production-form';
 
 export function Component() {
@@ -22,7 +23,10 @@ export function Component() {
     );
 
   return (
-    <>
+    <RequirePermission
+      action={editing ? 'production:update' : 'production:create'}
+      resource={record.data && { createdBy: record.data.createdBy.id }}
+    >
       <PageHeader
         title={
           editing ? (
@@ -37,6 +41,6 @@ export function Component() {
       />
       {/* key: remount with fresh defaults when a newer version is loaded */}
       <ProductionForm key={record.data?.version ?? 'new'} original={record.data} />
-    </>
+    </RequirePermission>
   );
 }

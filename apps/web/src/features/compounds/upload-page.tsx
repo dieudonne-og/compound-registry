@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/common/page-header';
 import { FieldError } from '@/components/common/field-error';
+import { RequirePermission } from '@/features/auth/require-permission';
 import { useConfirmCompound } from './api';
 import { Dropzone } from './dropzone';
 import { ProcessingStages } from './processing-stages';
@@ -32,6 +33,14 @@ type Phase =
   { name: 'select' } | { name: 'processing'; pct: number } | { name: 'review'; result: ExtractionResult };
 
 export function Component() {
+  return (
+    <RequirePermission action="compound:extract">
+      <UploadPage />
+    </RequirePermission>
+  );
+}
+
+function UploadPage() {
   const navigate = useNavigate();
   const t = useT();
   const [phase, setPhase] = useState<Phase>({ name: 'select' });
