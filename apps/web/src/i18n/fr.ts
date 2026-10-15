@@ -15,6 +15,7 @@ export const webFr: Shape<typeof webEn> = {
     networkError: 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.',
     notFound: 'Introuvable',
     loadFailed: 'Impossible de charger ce contenu',
+    forbidden: 'Votre rôle ne permet pas d’ouvrir cette page.',
     reference: 'Référence {id}',
     confidence: 'de confiance',
     confidenceTip: 'Confiance de la reconnaissance : {level}',

@@ -59,4 +59,10 @@ test('auditors can read and verify but not edit', async ({ page }) => {
   await page.getByRole('row').nth(1).click();
   await expect(page.getByRole('button', { name: 'Verify integrity' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Edit' })).toHaveCount(0);
+
+  // Opening a write-only page by its address explains the restriction instead of showing the form.
+  for (const path of ['/production/new', '/compounds/upload']) {
+    await page.goto(path);
+    await expect(page.getByText('Your role does not allow this page.')).toBeVisible();
+  }
 });
